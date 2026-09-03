@@ -1,37 +1,37 @@
-# HRIS Modern
+# HRIS
 
-Implementasi Sistem Informasi HRIS sesuai [SRS-HRIS.md](./SRS-HRIS.md) dan [SDD-HRIS.md](./SDD-HRIS.md), rilis pertama (modul Rekrutmen & Penilaian Kinerja belum termasuk — fase lanjutan).
+Implementation of the HRIS (Human Resource Information System) per [SRS-HRIS.md](./SRS-HRIS.md) and [SDD-HRIS.md](./SDD-HRIS.md), first release (Recruitment & Performance Review modules are not included yet — later phase).
 
-## Struktur
+## Structure
 
 - [`hris-backend/`](./hris-backend) — REST API (NestJS + Prisma + PostgreSQL + Redis/BullMQ + MinIO)
 - [`hris-frontend/`](./hris-frontend) — Web app (Next.js App Router + Ant Design)
-- `docker-compose.yml` — orkestrasi seluruh stack untuk pengembangan lokal
+- `docker-compose.yml` — orchestrates the whole stack for local development
 
-## Menjalankan (Docker)
+## Running (Docker)
 
-Prasyarat: Docker Desktop / Docker Engine + Compose plugin.
+Prerequisite: Docker Desktop / Docker Engine + Compose plugin.
 
 ```bash
-cp .env.example .env   # opsional, edit jika perlu
+cp .env.example .env   # optional, edit if needed
 docker compose build
 docker compose up -d
 ```
 
-Backend otomatis menjalankan `prisma db push` (sinkronisasi schema) dan seed data demo saat container pertama kali start.
+The backend automatically runs `prisma db push` (schema sync) and seeds demo data on first container start.
 
-Layanan yang tersedia:
+Available services:
 
-| Layanan | URL |
+| Service | URL |
 |---|---|
 | Frontend | http://localhost:3000 |
 | Backend REST API | http://localhost:4000/api/v1 |
 | Swagger API docs | http://localhost:4000/api/docs |
 | MinIO Console | http://localhost:9001 |
 
-## Akun Demo (hasil seed)
+## Demo Accounts (from seed)
 
-Password sama untuk semua akun: **`Password123!`**
+Same password for all accounts: **`Password123!`**
 
 | Email | Role |
 |---|---|
@@ -40,20 +40,20 @@ Password sama untuk semua akun: **`Password123!`**
 | hradmin@hris.local | HR Admin |
 | superadmin@hris.local | Superadmin |
 
-## Pengembangan tanpa Docker
+## Development without Docker
 
-Karena `npm` di beberapa mesin pengembangan mungkin bermasalah, cara paling konsisten untuk install dependency & menjalankan masing-masing app adalah tetap lewat container Node, contoh untuk backend:
+Since `npm` may be broken on some development machines, the most consistent way to install dependencies & run each app is still through a Node container, e.g. for the backend:
 
 ```bash
 docker run --rm -it -v "${PWD}/hris-backend:/app" -w /app node:20-alpine sh
-# di dalam container:
+# inside the container:
 npm install
 npx prisma generate
 npm run start:dev
 ```
 
-Pola yang sama berlaku untuk `hris-frontend/` (`npm install && npm run dev`), asalkan Postgres/Redis/MinIO sudah berjalan (bisa lewat `docker compose up -d postgres redis minio`) dan file `.env`/`.env.local` masing-masing app mengarah ke `localhost` alih-alih nama service Docker.
+The same pattern applies to `hris-frontend/` (`npm install && npm run dev`), as long as Postgres/Redis/MinIO are already running (e.g. via `docker compose up -d postgres redis minio`) and each app's `.env`/`.env.local` points to `localhost` instead of the Docker service names.
 
-## Cakupan Modul (Rilis Pertama)
+## Module Coverage (First Release)
 
-Sesuai SRS §3.1–3.6: Autentikasi & Akses, Manajemen Karyawan, Absensi & Waktu Kerja, Cuti & Izin, Penggajian, Pelaporan & Analitik. Modul Rekrutmen (§3.7) dan Penilaian Kinerja (§3.8) belum diimplementasikan karena SRS menandainya sebagai fase lanjutan.
+Per SRS §3.1–3.6: Authentication & Access, Employee Management, Attendance & Working Hours, Leave, Payroll, Reporting & Analytics. The Recruitment (§3.7) and Performance Review (§3.8) modules are not implemented yet, as the SRS marks them as a later phase.
