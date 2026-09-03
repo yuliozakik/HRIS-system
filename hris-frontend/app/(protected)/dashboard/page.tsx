@@ -1,7 +1,9 @@
 "use client";
 
-import { Alert, Button, Card, Col, Row, Skeleton, Statistic, Table, Tag } from "antd";
+import type { ReactNode } from "react";
+import { Alert, Skeleton, Table, Tag } from "antd";
 import {
+  ArrowUpOutlined,
   CalendarOutlined,
   ClockCircleOutlined,
   FileTextOutlined,
@@ -11,8 +13,10 @@ import {
 } from "@ant-design/icons";
 import Link from "next/link";
 import dayjs from "dayjs";
+import "dayjs/locale/id";
 import { useAuth } from "@/lib/auth-context";
 import { useApiGet } from "@/lib/hooks";
+import type { RoleName } from "@/lib/types";
 
 interface ReportSummary {
   totalEmployees: number;
@@ -45,20 +49,102 @@ interface PayslipSummary {
 
 const ORG_VIEW_ROLES = ["HR_ADMIN", "SUPERADMIN", "MANAGER"];
 
+const ROLE_LABEL: Record<RoleName, string> = {
+  EMPLOYEE: "Karyawan",
+  MANAGER: "Manager",
+  HR_ADMIN: "HR Admin",
+  SUPERADMIN: "Superadmin",
+};
+
+function greetingForNow() {
+  const h = dayjs().hour();
+  if (h < 11) return "Pagi";
+  if (h < 15) return "Siang";
+  if (h < 18) return "Sore";
+  return "Malam";
+}
+
 export default function DashboardPage() {
   const { user } = useAuth();
   const isOrgView = !!user && ORG_VIEW_ROLES.includes(user.role);
+  const today = dayjs().locale("id").format("dddd, D MMMM YYYY");
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="animate-fade-in-up rounded-2xl bg-gradient-to-r from-indigo-600 via-blue-600 to-sky-500 px-6 py-6 text-white shadow-md sm:px-8">
-        <h1 className="text-xl font-semibold sm:text-2xl">Selamat datang, {user?.fullName} 👋</h1>
-        <p className="mt-1 text-white/80">
-          {isOrgView ? "Ringkasan data SDM perusahaan Anda" : "Ringkasan aktivitas Anda hari ini"}
-        </p>
+    <div className="flex flex-col gap-5">
+      <div className="animate-fade-in-up relative overflow-hidden rounded-xl bg-white p-5 shadow-sm sm:p-6">
+        <div className="pointer-events-none absolute -top-16 -right-16 h-72 w-72 rounded-full bg-brand-blue-subtle blur-3xl" />
+        <div className="relative flex flex-col gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-status-info-subtle px-2.5 py-0.5 text-xs font-medium text-status-info">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-status-info" />
+              {user ? ROLE_LABEL[user.role] : ""}
+            </span>
+            <span className="text-text-muted">•</span>
+            <span className="flex items-center gap-1 text-xs text-text-secondary">
+              <CalendarOutlined /> {today}
+            </span>
+          </div>
+          <h1 className="font-heading text-xl text-text-primary sm:text-2xl">
+            Selamat {greetingForNow()}, {user?.fullName}
+          </h1>
+          <p className="max-w-2xl text-sm text-text-secondary">
+            {isOrgView
+              ? "Berikut ringkasan data SDM perusahaan Anda hari ini."
+              : "Berikut ringkasan aktivitas Anda hari ini."}
+          </p>
+        </div>
       </div>
 
       {isOrgView ? <OrgSummary /> : <EmployeeSummary employeeId={user?.employeeId ?? null} />}
+    </div>
+  );
+}
+
+function KpiCard({
+  title,
+  value,
+  suffix,
+  icon,
+  tint,
+  trend,
+  delay = 0,
+}: {
+  title: string;
+  value: ReactNode;
+  suffix?: string;
+  icon: ReactNode;
+  tint: "blue" | "success" | "warning" | "tertiary";
+  trend?: string;
+  delay?: number;
+}) {
+  const tintClass = {
+    blue: "bg-brand-blue-subtle text-primary-container",
+    success: "bg-status-success-subtle text-status-success",
+    warning: "bg-status-warning-subtle text-status-warning",
+    tertiary: "bg-surface-container text-tertiary",
+  }[tint];
+
+  return (
+    <div
+      className="animate-fade-in-up rounded-xl bg-white p-4 shadow-sm transition-shadow hover:shadow-md sm:p-5"
+      style={{ animationDelay: `${delay}ms` }}
+    >
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-medium text-text-secondary">{title}</span>
+        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-lg ${tintClass}`}>
+          {icon}
+        </div>
+      </div>
+      <div className="mt-2 flex items-baseline gap-2">
+        <span className="font-heading text-2xl font-bold text-text-primary">{value}</span>
+        {suffix && <span className="text-sm text-text-secondary">{suffix}</span>}
+      </div>
+      {trend && (
+        <div className="mt-1 flex items-center gap-1 text-xs font-semibold text-status-success">
+          <ArrowUpOutlined className="text-[10px]" />
+          {trend}
+        </div>
+      )}
     </div>
   );
 }
@@ -71,78 +157,72 @@ function OrgSummary() {
 
   return (
     <>
-      <Row gutter={[16, 16]}>
-        <Col xs={24} sm={12} lg={6}>
-          <Card className="animate-fade-in-up">
-            <Statistic
-              title="Karyawan Aktif"
-              value={data.activeEmployees}
-              suffix={`/ ${data.totalEmployees}`}
-              prefix={<TeamOutlined />}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card className="animate-fade-in-up [animation-delay:80ms]">
-            <Statistic
-              title="Cuti Menunggu Persetujuan"
-              value={data.pendingLeaveRequests}
-              prefix={<FileTextOutlined />}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card className="animate-fade-in-up [animation-delay:160ms]">
-            <Statistic
-              title="Turnover (YTD)"
-              value={data.turnoverRateYtd * 100}
-              precision={1}
-              suffix="%"
-              prefix={<UserSwitchOutlined />}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card className="animate-fade-in-up [animation-delay:240ms]">
-            <Statistic
-              title="Keterlambatan Bulan Ini (menit)"
-              value={data.attendanceThisMonth.totalLate}
-              prefix={<ClockCircleOutlined />}
-            />
-          </Card>
-        </Col>
-      </Row>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <KpiCard
+          title="Karyawan Aktif"
+          value={data.activeEmployees}
+          suffix={`/ ${data.totalEmployees}`}
+          icon={<TeamOutlined />}
+          tint="blue"
+        />
+        <KpiCard
+          title="Cuti Menunggu Persetujuan"
+          value={data.pendingLeaveRequests}
+          icon={<FileTextOutlined />}
+          tint="warning"
+          delay={80}
+        />
+        <KpiCard
+          title="Turnover (YTD)"
+          value={`${(data.turnoverRateYtd * 100).toFixed(1)}%`}
+          icon={<UserSwitchOutlined />}
+          tint="tertiary"
+          delay={160}
+        />
+        <KpiCard
+          title="Keterlambatan Bulan Ini"
+          value={data.attendanceThisMonth.totalLate}
+          suffix="menit"
+          icon={<ClockCircleOutlined />}
+          tint="success"
+          delay={240}
+        />
+      </div>
 
-      <Row gutter={[16, 16]}>
-        <Col xs={24} lg={14}>
-          <Card title="Karyawan per Departemen" className="animate-fade-in-up [animation-delay:320ms]">
-            <Table
-              size="small"
-              pagination={false}
-              rowKey="departmentName"
-              dataSource={data.employeesByDepartment}
-              columns={[
-                { title: "Departemen", dataIndex: "departmentName" },
-                { title: "Jumlah", dataIndex: "count", width: 120 },
-              ]}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} lg={10}>
-          <Card title="Payroll Run Terbaru" className="animate-fade-in-up [animation-delay:400ms]">
-            {data.latestPayrollRun ? (
-              <div className="flex items-center justify-between">
-                <span className="text-lg">{data.latestPayrollRun.period}</span>
-                <Tag color={statusColor(data.latestPayrollRun.status)}>
-                  {data.latestPayrollRun.status}
-                </Tag>
-              </div>
-            ) : (
-              <span className="text-zinc-400">Belum ada payroll run</span>
-            )}
-          </Card>
-        </Col>
-      </Row>
+      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-12">
+        <div className="animate-fade-in-up rounded-xl bg-white p-5 shadow-sm lg:col-span-7 [animation-delay:320ms]">
+          <h2 className="mb-3 font-heading text-base font-semibold text-text-primary">
+            Karyawan per Departemen
+          </h2>
+          <Table
+            size="small"
+            pagination={false}
+            rowKey="departmentName"
+            dataSource={data.employeesByDepartment}
+            columns={[
+              { title: "Departemen", dataIndex: "departmentName" },
+              { title: "Jumlah", dataIndex: "count", width: 120 },
+            ]}
+          />
+        </div>
+        <div className="animate-fade-in-up rounded-xl bg-white p-5 shadow-sm lg:col-span-5 [animation-delay:400ms]">
+          <h2 className="mb-3 font-heading text-base font-semibold text-text-primary">
+            Payroll Run Terbaru
+          </h2>
+          {data.latestPayrollRun ? (
+            <div className="flex items-center justify-between rounded-lg bg-surface-subtle px-4 py-3">
+              <span className="text-lg font-medium text-text-primary">
+                {data.latestPayrollRun.period}
+              </span>
+              <Tag color={statusColor(data.latestPayrollRun.status)}>
+                {data.latestPayrollRun.status}
+              </Tag>
+            </div>
+          ) : (
+            <span className="text-text-muted">Belum ada payroll run</span>
+          )}
+        </div>
+      </div>
     </>
   );
 }
@@ -164,57 +244,67 @@ function EmployeeSummary({ employeeId }: { employeeId: string | null }) {
   const latestPayslip = payslips?.[0];
   const loading = loadingAttendance || loadingBalances || loadingPayslips;
 
+  if (loading) return <Skeleton active />;
+
   return (
     <>
-      <Row gutter={[16, 16]}>
-        <Col xs={24} sm={12} lg={8}>
-          <Card className="animate-fade-in-up" loading={loading}>
-            <Statistic
-              title="Absensi Hari Ini"
-              value={todayRow?.checkIn ? dayjs(todayRow.checkIn).format("HH:mm") : "Belum absen"}
-              prefix={<ClockCircleOutlined />}
-            />
-            {!loading && !todayRow?.checkIn && (
-              <Link href="/attendance" className="mt-2 inline-block text-sm text-blue-600 hover:underline">
-                Check in sekarang →
-              </Link>
-            )}
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={8}>
-          <Card className="animate-fade-in-up [animation-delay:80ms]" loading={loading}>
-            <Statistic
-              title="Sisa Cuti Tahunan"
-              value={annualBalance?.balance ?? 0}
-              suffix="hari"
-              prefix={<CalendarOutlined />}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={8}>
-          <Card className="animate-fade-in-up [animation-delay:160ms]" loading={loading}>
-            <Statistic
-              title="Slip Gaji Terbaru"
-              value={latestPayslip ? latestPayslip.period : "Belum ada"}
-              prefix={<WalletOutlined />}
-            />
-          </Card>
-        </Col>
-      </Row>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div>
+          <KpiCard
+            title="Absensi Hari Ini"
+            value={todayRow?.checkIn ? dayjs(todayRow.checkIn).format("HH:mm") : "Belum absen"}
+            icon={<ClockCircleOutlined />}
+            tint="blue"
+          />
+          {!todayRow?.checkIn && (
+            <Link
+              href="/attendance"
+              className="mt-2 inline-block text-sm text-primary-container hover:underline"
+            >
+              Check in sekarang →
+            </Link>
+          )}
+        </div>
+        <KpiCard
+          title="Sisa Cuti Tahunan"
+          value={annualBalance?.balance ?? 0}
+          suffix="hari"
+          icon={<CalendarOutlined />}
+          tint="success"
+          delay={80}
+        />
+        <KpiCard
+          title="Slip Gaji Terbaru"
+          value={latestPayslip ? latestPayslip.period : "Belum ada"}
+          icon={<WalletOutlined />}
+          tint="tertiary"
+          delay={160}
+        />
+      </div>
 
-      <Card title="Aksi Cepat" className="animate-fade-in-up [animation-delay:240ms]">
+      <div className="animate-fade-in-up mt-4 rounded-xl bg-white p-5 shadow-sm [animation-delay:240ms]">
+        <h2 className="mb-3 font-heading text-base font-semibold text-text-primary">Aksi Cepat</h2>
         <div className="flex flex-wrap gap-3">
-          <Link href="/attendance">
-            <Button icon={<ClockCircleOutlined />}>Absensi Saya</Button>
+          <Link
+            href="/attendance"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-surface-subtle px-3 py-2 text-sm font-medium text-text-primary hover:bg-surface-container"
+          >
+            <ClockCircleOutlined /> Absensi Saya
           </Link>
-          <Link href="/leave">
-            <Button icon={<CalendarOutlined />}>Ajukan Cuti</Button>
+          <Link
+            href="/leave"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-surface-subtle px-3 py-2 text-sm font-medium text-text-primary hover:bg-surface-container"
+          >
+            <CalendarOutlined /> Ajukan Cuti
           </Link>
-          <Link href="/payslips">
-            <Button icon={<FileTextOutlined />}>Slip Gaji</Button>
+          <Link
+            href="/payslips"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-surface-subtle px-3 py-2 text-sm font-medium text-text-primary hover:bg-surface-container"
+          >
+            <FileTextOutlined /> Slip Gaji
           </Link>
         </div>
-      </Card>
+      </div>
     </>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Alert, Button, Card, Input, Select, Table, Tag } from "antd";
 import type { TableColumnsType } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
@@ -48,7 +49,8 @@ function statusLabel(status: string) {
 
 export default function EmployeesPage() {
   const { user } = useAuth();
-  const [search, setSearch] = useState("");
+  const searchParams = useSearchParams();
+  const [search, setSearch] = useState(searchParams.get("search") ?? "");
   const [departmentId, setDepartmentId] = useState<string | undefined>();
   const [status, setStatus] = useState<string | undefined>();
 
@@ -122,6 +124,7 @@ export default function EmployeesPage() {
           <Input.Search
             placeholder="Cari nama atau NIK..."
             allowClear
+            defaultValue={search}
             onSearch={setSearch}
             className="w-64"
           />

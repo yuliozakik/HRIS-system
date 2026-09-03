@@ -4,11 +4,21 @@ import { useMemo, useState, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Avatar, Dropdown, Layout, Menu, Spin, Typography } from "antd";
-import { LogoutOutlined, MenuOutlined, UserOutlined } from "@ant-design/icons";
+import {
+  CalendarOutlined,
+  ClockCircleOutlined,
+  LogoutOutlined,
+  MenuOutlined,
+  SearchOutlined,
+  UserOutlined,
+} from "@ant-design/icons";
+import dayjs from "dayjs";
 import { useAuth } from "@/lib/auth-context";
-import { navItemsForRole } from "@/lib/nav";
+import { navItemsForRole, NAV_ITEMS } from "@/lib/nav";
 
 const { Header, Sider, Content } = Layout;
+
+const SEARCH_ROLES = ["HR_ADMIN", "SUPERADMIN", "MANAGER"];
 
 export default function ProtectedLayout({ children }: { children: ReactNode }) {
   const { user, loading, logout } = useAuth();
@@ -18,6 +28,8 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
   const [isMobile, setIsMobile] = useState(false);
 
   const navItems = useMemo(() => (user ? navItemsForRole(user.role) : []), [user]);
+  const operationalItems = useMemo(() => navItems.filter((i) => !i.key.startsWith("admin-")), [navItems]);
+  const configItems = useMemo(() => navItems.filter((i) => i.key.startsWith("admin-")), [navItems]);
 
   const selectedKey = useMemo(() => {
     const match = navItems
@@ -25,6 +37,14 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
       .sort((a, b) => b.href.length - a.href.length)[0];
     return match?.key;
   }, [navItems, pathname]);
+
+  const activeLabel = useMemo(
+    () => NAV_ITEMS.find((i) => i.key === selectedKey)?.label ?? "Dashboard",
+    [selectedKey],
+  );
+
+  const now = dayjs();
+  const monthProgress = Math.round((now.date() / now.daysInMonth()) * 100);
 
   if (loading) {
     return (
@@ -39,8 +59,15 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
     return null;
   }
 
+  const menuBuilder = (items: typeof navItems) =>
+    items.map((item) => ({
+      key: item.key,
+      icon: item.icon,
+      label: <Link href={item.href}>{item.label}</Link>,
+    }));
+
   return (
-    <Layout className="min-h-screen">
+    <Layout className="min-h-screen !bg-surface-page">
       {isMobile && !collapsed && (
         <div
           aria-hidden
@@ -52,64 +79,139 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
         collapsible
         collapsed={collapsed}
         onCollapse={setCollapsed}
-        theme="dark"
+        theme="light"
         breakpoint="lg"
         collapsedWidth={isMobile ? 0 : 80}
         onBreakpoint={(broken) => {
           setIsMobile(broken);
           setCollapsed(broken);
         }}
-        className="!fixed !left-0 !top-0 !bottom-0 !z-20 !h-screen overflow-auto"
+        width={228}
+        className="!fixed !left-0 !top-0 !bottom-0 !z-20 !h-screen overflow-auto !border-r !border-border-subtle !bg-white"
       >
-        <div className="h-16 flex items-center justify-center gap-2 text-white font-semibold text-lg">
-          <span className="text-xl">🧭</span>
+        <div className="h-16 flex items-center justify-center gap-2 font-heading font-bold text-lg text-text-primary">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-container text-base text-white">
+            🧭
+          </span>
           {!collapsed && "HRIS Modern"}
         </div>
+
         <Menu
-          theme="dark"
           mode="inline"
           selectedKeys={selectedKey ? [selectedKey] : []}
           onClick={() => isMobile && setCollapsed(true)}
-          items={navItems.map((item) => ({
-            key: item.key,
-            icon: item.icon,
-            label: <Link href={item.href}>{item.label}</Link>,
-          }))}
+          className="!border-none px-2"
+          items={menuBuilder(operationalItems)}
         />
-      </Sider>
-      <Layout
-        className="transition-all duration-200"
-        style={{ marginLeft: isMobile ? 0 : collapsed ? 80 : 200 }}
-      >
-        <Header className="!bg-white flex items-center justify-between px-4 shadow-sm sm:px-6">
-          <button
-            type="button"
-            aria-label="Buka menu"
-            onClick={() => setCollapsed((c) => !c)}
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-lg text-zinc-600 hover:bg-zinc-100 lg:hidden"
-          >
-            <MenuOutlined />
-          </button>
-          <span className="hidden sm:block" />
-          <Dropdown
-            menu={{
-              items: [
-                { key: "logout", icon: <LogoutOutlined />, label: "Logout", onClick: () => logout() },
-              ],
-            }}
-          >
-            <div className="flex items-center gap-2 cursor-pointer">
-              <Avatar icon={<UserOutlined />} />
-              <div className="leading-tight">
-                <div className="text-sm font-medium">{user.fullName}</div>
-                <Typography.Text type="secondary" className="!text-xs">
-                  {roleLabel(user.role)}
-                </Typography.Text>
+
+        {configItems.length > 0 && (
+          <>
+            {!collapsed && (
+              <div className="px-5 pt-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-text-muted">
+                Konfigurasi
               </div>
+            )}
+            <Menu
+              mode="inline"
+              selectedKeys={selectedKey ? [selectedKey] : []}
+              onClick={() => isMobile && setCollapsed(true)}
+              className="!border-none px-2"
+              items={menuBuilder(configItems)}
+            />
+          </>
+        )}
+
+        {!collapsed && (
+          <div className="m-3 rounded-xl bg-surface-subtle p-3">
+            <div className="mb-1 flex items-center justify-between">
+              <span className="text-xs text-text-secondary">Periode Berjalan</span>
+              <span className="text-xs font-semibold text-status-success">Aktif</span>
             </div>
-          </Dropdown>
+            <p className="mb-2 font-heading text-sm font-semibold text-text-primary">
+              {now.format("MMMM YYYY")}
+            </p>
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-border-subtle">
+              <div
+                className="h-full bg-primary-container"
+                style={{ width: `${monthProgress}%` }}
+              />
+            </div>
+          </div>
+        )}
+      </Sider>
+
+      <Layout
+        className="!bg-surface-page transition-all duration-200"
+        style={{ marginLeft: isMobile ? 0 : collapsed ? 80 : 228 }}
+      >
+        <Header className="!h-16 !bg-white/90 backdrop-blur-xl flex items-center justify-between gap-4 border-b border-border-subtle px-4 shadow-sm sm:px-6">
+          <div className="flex min-w-0 flex-1 items-center gap-4">
+            <button
+              type="button"
+              aria-label="Buka menu"
+              onClick={() => setCollapsed((c) => !c)}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-lg text-text-secondary hover:bg-surface-subtle lg:hidden"
+            >
+              <MenuOutlined />
+            </button>
+            <div className="hidden items-center gap-1.5 truncate text-sm text-text-muted md:flex">
+              <span>HRIS</span>
+              <span>/</span>
+              <span className="font-medium text-text-primary">{activeLabel}</span>
+            </div>
+            {SEARCH_ROLES.includes(user.role) && (
+              <form
+                className="relative hidden w-full max-w-xs xl:block"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const value = (e.currentTarget.elements.namedItem("q") as HTMLInputElement).value;
+                  router.push(value ? `/employees?search=${encodeURIComponent(value)}` : "/employees");
+                }}
+              >
+                <SearchOutlined className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+                <input
+                  name="q"
+                  placeholder="Cari karyawan, NIK..."
+                  className="h-10 w-full rounded-lg bg-surface-subtle pl-9 pr-3 text-sm text-text-primary outline-none placeholder:text-text-muted focus:bg-white focus:ring-2 focus:ring-primary-container/20"
+                />
+              </form>
+            )}
+          </div>
+
+          <div className="flex shrink-0 items-center gap-2">
+            <Link
+              href="/leave"
+              className="hidden h-10 items-center gap-1.5 rounded-lg bg-surface-subtle px-3 text-sm font-medium text-text-primary transition-colors hover:bg-surface-container sm:inline-flex"
+            >
+              <CalendarOutlined /> Ajukan Cuti
+            </Link>
+            <Link
+              href="/attendance"
+              className="hidden h-10 items-center gap-1.5 rounded-lg bg-primary-container px-3 text-sm font-medium text-white transition-colors hover:bg-brand-blue-hover sm:inline-flex"
+            >
+              <ClockCircleOutlined /> Absensi
+            </Link>
+            <div className="mx-1 hidden h-6 w-px bg-border-subtle sm:block" />
+            <Dropdown
+              menu={{
+                items: [
+                  { key: "logout", icon: <LogoutOutlined />, label: "Logout", onClick: () => logout() },
+                ],
+              }}
+            >
+              <div className="flex items-center gap-2 cursor-pointer">
+                <Avatar icon={<UserOutlined />} />
+                <div className="hidden leading-tight sm:block">
+                  <div className="text-sm font-medium text-text-primary">{user.fullName}</div>
+                  <Typography.Text type="secondary" className="!text-xs">
+                    {roleLabel(user.role)}
+                  </Typography.Text>
+                </div>
+              </div>
+            </Dropdown>
+          </div>
         </Header>
-        <Content className="p-6 bg-zinc-50">{children}</Content>
+        <Content className="p-4 sm:p-6">{children}</Content>
       </Layout>
     </Layout>
   );

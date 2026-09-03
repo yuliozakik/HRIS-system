@@ -1,19 +1,21 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import { AntdRegistry } from "@ant-design/nextjs-registry";
 import { ConfigProvider } from "antd";
 import idID from "antd/locale/id_ID";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
+  weight: ["400", "500", "600"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const jakarta = Plus_Jakarta_Sans({
+  variable: "--font-jakarta",
   subsets: ["latin"],
+  weight: ["600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -25,13 +27,29 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="id"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${inter.variable} ${jakarta.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col bg-surface-page">
         <AntdRegistry>
           <ConfigProvider
             locale={idID}
-            theme={{ token: { colorPrimary: "#1677ff", borderRadius: 6 } }}
+            theme={{
+              token: {
+                colorPrimary: "#2563eb",
+                colorSuccess: "#10b981",
+                colorWarning: "#f59e0b",
+                colorError: "#ef4444",
+                colorInfo: "#0284c7",
+                colorTextBase: "#0f172a",
+                colorBorder: "#e2e8f0",
+                borderRadius: 8,
+                fontFamily: "var(--font-inter), Arial, Helvetica, sans-serif",
+              },
+              components: {
+                Card: { borderRadiusLG: 12 },
+                Button: { borderRadius: 8, controlHeight: 40 },
+              },
+            }}
           >
             <AuthProvider>{children}</AuthProvider>
           </ConfigProvider>
