@@ -4,7 +4,7 @@ import { useMemo, useState, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Avatar, Dropdown, Layout, Menu, Spin, Typography } from "antd";
-import { LogoutOutlined, UserOutlined } from "@ant-design/icons";
+import { LogoutOutlined, MenuOutlined, UserOutlined } from "@ant-design/icons";
 import { useAuth } from "@/lib/auth-context";
 import { navItemsForRole } from "@/lib/nav";
 
@@ -15,6 +15,7 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   const navItems = useMemo(() => (user ? navItemsForRole(user.role) : []), [user]);
 
@@ -40,22 +41,56 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
 
   return (
     <Layout className="min-h-screen">
-      <Sider collapsible collapsed={collapsed} onCollapse={setCollapsed} theme="dark">
-        <div className="h-16 flex items-center justify-center text-white font-semibold text-lg">
-          {collapsed ? "HRIS" : "HRIS Modern"}
+      {isMobile && !collapsed && (
+        <div
+          aria-hidden
+          onClick={() => setCollapsed(true)}
+          className="fixed inset-0 z-10 bg-black/40"
+        />
+      )}
+      <Sider
+        collapsible
+        collapsed={collapsed}
+        onCollapse={setCollapsed}
+        theme="dark"
+        breakpoint="lg"
+        collapsedWidth={isMobile ? 0 : 80}
+        onBreakpoint={(broken) => {
+          setIsMobile(broken);
+          setCollapsed(broken);
+        }}
+        className="!fixed !left-0 !top-0 !bottom-0 !z-20 !h-screen overflow-auto"
+      >
+        <div className="h-16 flex items-center justify-center gap-2 text-white font-semibold text-lg">
+          <span className="text-xl">🧭</span>
+          {!collapsed && "HRIS Modern"}
         </div>
         <Menu
           theme="dark"
           mode="inline"
           selectedKeys={selectedKey ? [selectedKey] : []}
+          onClick={() => isMobile && setCollapsed(true)}
           items={navItems.map((item) => ({
             key: item.key,
+            icon: item.icon,
             label: <Link href={item.href}>{item.label}</Link>,
           }))}
         />
       </Sider>
-      <Layout>
-        <Header className="!bg-white flex items-center justify-end px-6 shadow-sm">
+      <Layout
+        className="transition-all duration-200"
+        style={{ marginLeft: isMobile ? 0 : collapsed ? 80 : 200 }}
+      >
+        <Header className="!bg-white flex items-center justify-between px-4 shadow-sm sm:px-6">
+          <button
+            type="button"
+            aria-label="Buka menu"
+            onClick={() => setCollapsed((c) => !c)}
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-lg text-zinc-600 hover:bg-zinc-100 lg:hidden"
+          >
+            <MenuOutlined />
+          </button>
+          <span className="hidden sm:block" />
           <Dropdown
             menu={{
               items: [
