@@ -25,6 +25,17 @@ export class ReportController {
     @Query() query: ExportReportQueryDto,
     @Res({ passthrough: false }) res: Response,
   ): Promise<void> {
+    if (query.format === 'pdf') {
+      const pdfBytes = await this.reportService.buildExportPdf(query);
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="report-${query.type}-${query.period}.pdf"`,
+      );
+      res.send(Buffer.from(pdfBytes));
+      return;
+    }
+
     const workbook = await this.reportService.buildExportWorkbook(query);
     res.setHeader(
       'Content-Type',

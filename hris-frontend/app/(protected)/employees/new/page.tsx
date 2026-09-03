@@ -157,7 +157,7 @@ export default function NewEmployeePage() {
               name="baseSalary"
               rules={[{ required: true, message: "Gaji pokok wajib diisi" }]}
             >
-              <InputNumber
+              <InputNumber<number>
                 className="w-full"
                 min={0}
                 step={100000}
@@ -166,7 +166,7 @@ export default function NewEmployeePage() {
               />
             </Form.Item>
             <Form.Item label="Tunjangan" name="allowance">
-              <InputNumber
+              <InputNumber<number>
                 className="w-full"
                 min={0}
                 step={50000}

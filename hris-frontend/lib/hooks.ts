@@ -19,6 +19,7 @@ export function useApiGet<T>(path: string | null, deps: unknown[] = []): UseApiS
   useEffect(() => {
     if (!path) return;
     let cancelled = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- resets loading/error on path or reload-tick change
     setLoading(true);
     setError(null);
     api

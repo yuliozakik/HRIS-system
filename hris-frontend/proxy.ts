@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 const PUBLIC_PATHS = ["/login", "/forgot-password", "/reset-password"];
 
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const hasSession = req.cookies.has("hris_session");
   const isPublicPath = PUBLIC_PATHS.some((p) => pathname.startsWith(p));

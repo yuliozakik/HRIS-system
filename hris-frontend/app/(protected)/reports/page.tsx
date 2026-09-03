@@ -8,9 +8,11 @@ import { apiDownload, ApiError, triggerBlobDownload } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 
 type ExportType = "attendance" | "leave" | "payroll";
+type ExportFormat = "excel" | "pdf";
 
 interface ExportFormValues {
   type: ExportType;
+  format: ExportFormat;
   period: Dayjs;
 }
 
@@ -18,6 +20,11 @@ const TYPE_OPTIONS: { value: ExportType; label: string }[] = [
   { value: "attendance", label: "Absensi" },
   { value: "leave", label: "Cuti" },
   { value: "payroll", label: "Payroll" },
+];
+
+const FORMAT_OPTIONS: { value: ExportFormat; label: string }[] = [
+  { value: "excel", label: "Excel" },
+  { value: "pdf", label: "PDF" },
 ];
 
 export default function ReportsPage() {
@@ -37,9 +44,10 @@ export default function ReportsPage() {
     try {
       const period = values.period.format("YYYY-MM");
       const blob = await apiDownload(
-        `/reports/export?type=${values.type}&format=excel&period=${period}`,
+        `/reports/export?type=${values.type}&format=${values.format}&period=${period}`,
       );
-      triggerBlobDownload(blob, `report-${values.type}-${period}.xlsx`);
+      const extension = values.format === "pdf" ? "pdf" : "xlsx";
+      triggerBlobDownload(blob, `report-${values.type}-${period}.${extension}`);
       message.success("Laporan berhasil diunduh");
     } catch (err) {
       message.error(err instanceof ApiError ? err.message : "Gagal mengunduh laporan");
@@ -57,7 +65,12 @@ export default function ReportsPage() {
 
       {isExportAllowed ? (
         <Card title="Ekspor Laporan">
-          <Form form={form} layout="inline" onFinish={handleExport}>
+          <Form
+            form={form}
+            layout="inline"
+            onFinish={handleExport}
+            initialValues={{ format: "excel" as ExportFormat }}
+          >
             <Form.Item
               name="type"
               label="Jenis Laporan"
@@ -76,6 +89,13 @@ export default function ReportsPage() {
             >
               <DatePicker picker="month" format="MM-YYYY" />
             </Form.Item>
+            <Form.Item
+              name="format"
+              label="Format"
+              rules={[{ required: true, message: "Format wajib dipilih" }]}
+            >
+              <Select className="w-32" options={FORMAT_OPTIONS} />
+            </Form.Item>
             <Form.Item>
               <Button
                 type="primary"
@@ -83,7 +103,7 @@ export default function ReportsPage() {
                 htmlType="submit"
                 loading={downloading}
               >
-                Unduh Excel
+                Unduh Laporan
               </Button>
             </Form.Item>
           </Form>

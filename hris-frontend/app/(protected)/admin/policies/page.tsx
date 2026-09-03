@@ -72,6 +72,7 @@ export default function AdminPoliciesPage() {
     for (const row of rows) {
       initial[row.key] = row.value === null || row.value === undefined ? "" : String(row.value);
     }
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- resyncs editable form state whenever fetched policies change
     setValues(initial);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
