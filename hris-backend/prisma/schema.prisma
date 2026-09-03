@@ -1,0 +1,306 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum RoleName {
+  EMPLOYEE
+  MANAGER
+  HR_ADMIN
+  SUPERADMIN
+}
+
+enum EmployeeStatus {
+  ACTIVE
+  INACTIVE
+  RESIGNED
+}
+
+enum AttendanceStatus {
+  ON_TIME
+  LATE
+  ABSENT
+  LEAVE
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum LeaveType {
+  ANNUAL
+  SICK
+  UNPAID
+  OTHER
+}
+
+enum PayrollRunStatus {
+  DRAFT
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+// ---------------------------------------------------------------------------
+// Auth / Access
+// ---------------------------------------------------------------------------
+
+model Role {
+  id       String       @id @default(uuid())
+  name     RoleName     @unique
+  accounts UserAccount[]
+
+  @@map("role")
+}
+
+model UserAccount {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  roleId       String    @map("role_id")
+  role         Role      @relation(fields: [roleId], references: [id])
+  employeeId   String?   @unique @map("employee_id")
+  employee     Employee? @relation(fields: [employeeId], references: [id])
+  isActive     Boolean   @default(true) @map("is_active")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  auditLogs           AuditLog[]
+  passwordResetTokens PasswordResetToken[]
+  approvedLeaves      LeaveRequest[]        @relation("LeaveApprover")
+
+  @@map("user_account")
+}
+
+model AuditLog {
+  id        String      @id @default(uuid())
+  userId    String?     @map("user_id")
+  user      UserAccount? @relation(fields: [userId], references: [id])
+  action    String
+  metadata  Json?
+  ipAddress String?     @map("ip_address")
+  createdAt DateTime    @default(now()) @map("created_at")
+
+  @@map("audit_log")
+}
+
+model PasswordResetToken {
+  id        String      @id @default(uuid())
+  userId    String      @map("user_id")
+  user      UserAccount @relation(fields: [userId], references: [id])
+  tokenHash String      @map("token_hash")
+  expiresAt DateTime    @map("expires_at")
+  usedAt    DateTime?   @map("used_at")
+  createdAt DateTime    @default(now()) @map("created_at")
+
+  @@map("password_reset_token")
+}
+
+// ---------------------------------------------------------------------------
+// Organization / Employee
+// ---------------------------------------------------------------------------
+
+model Department {
+  id                 String       @id @default(uuid())
+  name               String
+  parentDepartmentId String?      @map("parent_department_id")
+  parentDepartment   Department?  @relation("DepartmentHierarchy", fields: [parentDepartmentId], references: [id])
+  children           Department[] @relation("DepartmentHierarchy")
+  positions          Position[]
+  employees          Employee[]
+
+  @@map("department")
+}
+
+model Position {
+  id           String     @id @default(uuid())
+  title        String
+  departmentId String     @map("department_id")
+  department   Department @relation(fields: [departmentId], references: [id])
+  employees    Employee[]
+
+  @@map("position")
+}
+
+model Employee {
+  id             String         @id @default(uuid())
+  nik            String         @unique
+  fullName       String         @map("full_name")
+  address        String?
+  phone          String?
+  email          String?
+  departmentId   String?        @map("department_id")
+  department     Department?    @relation(fields: [departmentId], references: [id])
+  positionId     String?        @map("position_id")
+  position       Position?      @relation(fields: [positionId], references: [id])
+  managerId      String?        @map("manager_id")
+  manager        Employee?      @relation("EmployeeManager", fields: [managerId], references: [id])
+  subordinates   Employee[]     @relation("EmployeeManager")
+  hireDate       DateTime       @map("hire_date")
+  status         EmployeeStatus @default(ACTIVE)
+  baseSalary     Decimal        @default(0) @map("base_salary") @db.Decimal(14, 2)
+  allowance      Decimal        @default(0) @db.Decimal(14, 2)
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+
+  userAccount     UserAccount?
+  documents       EmployeeDocument[]
+  mutations       EmployeeMutation[]
+  attendances     Attendance[]
+  leaveRequests   LeaveRequest[]
+  leaveBalances   LeaveBalance[]
+  payrollDetails  PayrollDetail[]
+
+  @@map("employee")
+}
+
+model EmployeeDocument {
+  id         String   @id @default(uuid())
+  employeeId String   @map("employee_id")
+  employee   Employee @relation(fields: [employeeId], references: [id])
+  docType    String   @map("doc_type")
+  fileUrl    String   @map("file_url")
+  fileName   String   @map("file_name")
+  uploadedAt DateTime @default(now()) @map("uploaded_at")
+
+  @@map("employee_document")
+}
+
+model EmployeeMutation {
+  id            String    @id @default(uuid())
+  employeeId    String    @map("employee_id")
+  employee      Employee  @relation(fields: [employeeId], references: [id])
+  fromPositionId String?  @map("from_position_id")
+  toPositionId   String?  @map("to_position_id")
+  fromDepartmentId String? @map("from_department_id")
+  toDepartmentId   String? @map("to_department_id")
+  note          String?
+  effectiveDate DateTime  @map("effective_date")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  @@map("employee_mutation")
+}
+
+// ---------------------------------------------------------------------------
+// Attendance
+// ---------------------------------------------------------------------------
+
+model Shift {
+  id          String       @id @default(uuid())
+  name        String
+  startTime   String       @map("start_time")
+  endTime     String       @map("end_time")
+  attendances Attendance[]
+
+  @@map("shift")
+}
+
+model Attendance {
+  id             String            @id @default(uuid())
+  employeeId     String            @map("employee_id")
+  employee       Employee          @relation(fields: [employeeId], references: [id])
+  shiftId        String?           @map("shift_id")
+  shift          Shift?            @relation(fields: [shiftId], references: [id])
+  date           DateTime          @db.Date
+  checkIn        DateTime?         @map("check_in")
+  checkOut       DateTime?         @map("check_out")
+  status         AttendanceStatus  @default(ON_TIME)
+  lateMinutes    Int               @default(0) @map("late_minutes")
+  overtimeMinutes Int              @default(0) @map("overtime_minutes")
+  createdAt      DateTime          @default(now()) @map("created_at")
+
+  @@unique([employeeId, date])
+  @@map("attendance")
+}
+
+// ---------------------------------------------------------------------------
+// Leave
+// ---------------------------------------------------------------------------
+
+model LeaveRequest {
+  id         String      @id @default(uuid())
+  employeeId String      @map("employee_id")
+  employee   Employee    @relation(fields: [employeeId], references: [id])
+  leaveType  LeaveType   @map("leave_type")
+  startDate  DateTime    @map("start_date") @db.Date
+  endDate    DateTime    @map("end_date") @db.Date
+  reason     String?
+  status     LeaveStatus @default(PENDING)
+  approverId String?     @map("approver_id")
+  approver   UserAccount? @relation("LeaveApprover", fields: [approverId], references: [id])
+  decidedAt  DateTime?   @map("decided_at")
+  createdAt  DateTime    @default(now()) @map("created_at")
+  updatedAt  DateTime    @updatedAt @map("updated_at")
+
+  @@map("leave_request")
+}
+
+model LeaveBalance {
+  id         String    @id @default(uuid())
+  employeeId String    @map("employee_id")
+  employee   Employee  @relation(fields: [employeeId], references: [id])
+  year       Int
+  leaveType  LeaveType @map("leave_type")
+  balance    Int
+
+  @@unique([employeeId, year, leaveType])
+  @@map("leave_balance")
+}
+
+// ---------------------------------------------------------------------------
+// Payroll
+// ---------------------------------------------------------------------------
+
+model PayrollRun {
+  id          String           @id @default(uuid())
+  period      String
+  status      PayrollRunStatus @default(DRAFT)
+  processedAt DateTime?        @map("processed_at")
+  createdAt   DateTime         @default(now()) @map("created_at")
+
+  details PayrollDetail[]
+
+  @@unique([period])
+  @@map("payroll_run")
+}
+
+model PayrollDetail {
+  id           String     @id @default(uuid())
+  payrollRunId String     @map("payroll_run_id")
+  payrollRun   PayrollRun @relation(fields: [payrollRunId], references: [id])
+  employeeId   String     @map("employee_id")
+  employee     Employee   @relation(fields: [employeeId], references: [id])
+  baseSalary   Decimal    @map("base_salary") @db.Decimal(14, 2)
+  allowance    Decimal    @default(0) @db.Decimal(14, 2)
+  grossPay     Decimal    @map("gross_pay") @db.Decimal(14, 2)
+  deductions   Decimal    @default(0) @db.Decimal(14, 2)
+  netPay       Decimal    @map("net_pay") @db.Decimal(14, 2)
+  payslipUrl   String?    @map("payslip_url")
+  createdAt    DateTime   @default(now()) @map("created_at")
+
+  @@unique([payrollRunId, employeeId])
+  @@map("payroll_detail")
+}
+
+// ---------------------------------------------------------------------------
+// Configurable policies (UC-08)
+// ---------------------------------------------------------------------------
+
+model PolicySetting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("policy_setting")
+}
