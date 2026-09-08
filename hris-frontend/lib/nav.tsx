@@ -13,6 +13,18 @@ import {
 } from "@ant-design/icons";
 import type { RoleName } from "./types";
 
+/**
+ * Keys of the (up to 3) items shown as primary bottom-tab-bar entries on
+ * mobile, in order, before the trailing "More" tab. Kept short and
+ * role-specific (Talenta-style: Home / <two most-used actions> / More).
+ */
+export const MOBILE_PRIMARY_KEYS: Record<RoleName, string[]> = {
+  EMPLOYEE: ["attendance", "leave"],
+  MANAGER: ["attendance-team", "leave-approvals"],
+  HR_ADMIN: ["employees", "payroll"],
+  SUPERADMIN: ["employees", "payroll"],
+};
+
 export interface NavItem {
   key: string;
   label: string;
@@ -79,4 +91,18 @@ export const NAV_ITEMS: NavItem[] = [
 
 export function navItemsForRole(role: RoleName): NavItem[] {
   return NAV_ITEMS.filter((item) => !item.roles || item.roles.includes(role));
+}
+
+/** Splits a role's nav items into the bottom-tab-bar primaries (Home + up to 2) and the rest (shown in the "More" sheet). */
+export function mobileNavForRole(role: RoleName): { primary: NavItem[]; rest: NavItem[] } {
+  const items = navItemsForRole(role);
+  const home = items.find((i) => i.key === "dashboard");
+  const primaryKeys = MOBILE_PRIMARY_KEYS[role] ?? [];
+  const primaryPicked = primaryKeys
+    .map((key) => items.find((i) => i.key === key))
+    .filter((i): i is NavItem => !!i);
+  const primary = [home, ...primaryPicked].filter((i): i is NavItem => !!i);
+  const primaryKeySet = new Set(primary.map((i) => i.key));
+  const rest = items.filter((i) => !primaryKeySet.has(i.key));
+  return { primary, rest };
 }

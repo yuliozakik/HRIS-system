@@ -41,7 +41,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="relative flex min-h-screen w-full flex-col overflow-hidden bg-zinc-50 lg:flex-row">
+    <div className="relative flex min-h-screen w-full flex-col overflow-hidden bg-surface-page lg:flex-row">
       {/* Brand panel */}
       <div className="relative flex shrink-0 flex-col justify-between overflow-hidden bg-gradient-to-br from-indigo-600 via-blue-600 to-sky-500 px-6 py-8 text-white sm:px-10 lg:w-1/2 lg:px-16 lg:py-14">
         <div
@@ -78,12 +78,18 @@ export default function LoginPage() {
         </div>
 
         <div className="animate-fade-in-up relative z-10 hidden text-xs text-white/60 [animation-delay:250ms] lg:block">
-          © {new Date().getFullYear()} HRIS Modern
+          © {new Date().getFullYear()} HRIS
         </div>
       </div>
 
       {/* Form panel */}
-      <div className="flex flex-1 items-start justify-center px-4 py-8 sm:px-8 lg:items-center lg:py-10">
+      <div className="flex flex-1 flex-col items-center justify-start gap-4 px-4 py-8 sm:px-8 lg:items-center lg:justify-center lg:py-10">
+        <Link
+          href="/"
+          className="animate-fade-in-up w-full max-w-sm text-sm text-text-secondary hover:text-text-primary"
+        >
+          ← Kembali ke beranda
+        </Link>
         <Card className="animate-fade-in-up w-full max-w-sm !rounded-2xl !border-0 !shadow-xl [animation-delay:100ms]">
           <Typography.Title level={3} className="!mb-1">
             Selamat datang kembali

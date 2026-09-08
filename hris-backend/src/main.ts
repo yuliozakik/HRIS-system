@@ -29,7 +29,7 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle('HRIS API')
-    .setDescription('REST API untuk Sistem Informasi HRIS Modern')
+    .setDescription('REST API untuk Sistem Informasi HRIS')
     .setVersion('1.0')
     .addBearerAuth()
     .build();

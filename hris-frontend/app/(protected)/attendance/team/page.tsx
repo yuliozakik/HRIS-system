@@ -1,7 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Alert, Card, DatePicker, Result, Table, Tag } from "antd";
+import { Alert, DatePicker, Result, Table, Tag } from "antd";
+import type { ColumnsType } from "antd/es/table";
+import { TeamOutlined } from "@ant-design/icons";
 import dayjs, { Dayjs } from "dayjs";
 import { useAuth } from "@/lib/auth-context";
 import { useApiGet } from "@/lib/hooks";
@@ -73,21 +75,62 @@ export default function TeamAttendancePage() {
     );
   }
 
+  const columns: ColumnsType<TeamAttendanceRow> = [
+    {
+      title: "Karyawan",
+      key: "employee",
+      render: (_, record) => record.employee?.fullName ?? "-",
+    },
+    {
+      title: "Tanggal",
+      dataIndex: "date",
+      render: (value: string) => dayjs(value).format("DD-MM-YYYY"),
+    },
+    {
+      title: "Check In",
+      dataIndex: "checkIn",
+      render: (value: string | null) => (value ? dayjs(value).format("HH:mm") : "-"),
+    },
+    {
+      title: "Check Out",
+      dataIndex: "checkOut",
+      render: (value: string | null) => (value ? dayjs(value).format("HH:mm") : "-"),
+    },
+    {
+      title: "Status",
+      dataIndex: "status",
+      render: (value: string) => <Tag color={statusColor(value)}>{statusLabel(value)}</Tag>,
+    },
+    {
+      title: "Telat (menit)",
+      dataIndex: "lateMinutes",
+      responsive: ["sm"],
+      render: (value: number | null) => value ?? 0,
+    },
+    {
+      title: "Lembur (menit)",
+      dataIndex: "overtimeMinutes",
+      responsive: ["sm"],
+      render: (value: number | null) => value ?? 0,
+    },
+  ];
+
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h1 className="text-xl font-semibold">Rekap Absensi Tim</h1>
-        <p className="text-zinc-500">Ringkasan kehadiran anggota tim</p>
+        <h1 className="font-heading text-xl text-text-primary sm:text-2xl">Rekap Absensi Tim</h1>
+        <p className="text-sm text-text-secondary">Ringkasan kehadiran anggota tim</p>
       </div>
 
       {error && <Alert type="error" showIcon message={error} />}
 
-      <Card>
-        <div className="mb-4">
+      <div className="animate-fade-in-up rounded-2xl bg-white p-4 shadow-sm sm:p-5">
+        <div className="mb-4 flex flex-wrap gap-3">
           <RangePicker
             value={range}
             format="DD-MM-YYYY"
             allowClear={false}
+            className="w-full sm:w-auto"
             onChange={(values) => {
               const start = values?.[0];
               const end = values?.[1];
@@ -98,50 +141,29 @@ export default function TeamAttendancePage() {
           />
         </div>
 
-        <Table
-          rowKey="id"
-          loading={loading}
-          dataSource={data ?? []}
-          pagination={{ pageSize: 10 }}
-          columns={[
-            {
-              title: "Karyawan",
-              key: "employee",
-              render: (_, record) => record.employee?.fullName ?? "-",
-            },
-            {
-              title: "Tanggal",
-              dataIndex: "date",
-              render: (value: string) => dayjs(value).format("DD-MM-YYYY"),
-            },
-            {
-              title: "Check In",
-              dataIndex: "checkIn",
-              render: (value: string | null) => (value ? dayjs(value).format("HH:mm") : "-"),
-            },
-            {
-              title: "Check Out",
-              dataIndex: "checkOut",
-              render: (value: string | null) => (value ? dayjs(value).format("HH:mm") : "-"),
-            },
-            {
-              title: "Status",
-              dataIndex: "status",
-              render: (value: string) => <Tag color={statusColor(value)}>{statusLabel(value)}</Tag>,
-            },
-            {
-              title: "Telat (menit)",
-              dataIndex: "lateMinutes",
-              render: (value: number | null) => value ?? 0,
-            },
-            {
-              title: "Lembur (menit)",
-              dataIndex: "overtimeMinutes",
-              render: (value: number | null) => value ?? 0,
-            },
-          ]}
-        />
-      </Card>
+        <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+          <Table
+            rowKey="id"
+            loading={loading}
+            dataSource={data ?? []}
+            pagination={{ pageSize: 10 }}
+            scroll={{ x: "max-content" }}
+            columns={columns}
+            locale={{
+              emptyText: (
+                <div className="flex flex-col items-center gap-2 py-8">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-blue-subtle text-lg text-primary-container">
+                    <TeamOutlined />
+                  </div>
+                  <span className="text-sm text-text-muted">
+                    Tidak ada data absensi pada rentang ini
+                  </span>
+                </div>
+              ),
+            }}
+          />
+        </div>
+      </div>
     </div>
   );
 }

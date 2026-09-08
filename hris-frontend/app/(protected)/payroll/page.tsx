@@ -122,12 +122,17 @@ export default function PayrollPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-xl font-semibold">Payroll</h1>
-          <p className="text-zinc-500">Kelola proses penggajian karyawan</p>
+          <h1 className="font-heading text-xl text-text-primary sm:text-2xl">Payroll</h1>
+          <p className="text-sm text-text-secondary">Kelola proses penggajian karyawan</p>
         </div>
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => setModalOpen(true)}>
+        <Button
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={() => setModalOpen(true)}
+          className="w-full sm:w-auto"
+        >
           Proses Payroll
         </Button>
       </div>
@@ -136,19 +141,37 @@ export default function PayrollPage() {
 
       <Card
         title="Riwayat Payroll Run"
+        className="animate-fade-in-up rounded-xl shadow-sm"
+        bordered={false}
         extra={
           <Button icon={<ReloadOutlined />} onClick={() => reload()}>
             Refresh
           </Button>
         }
       >
-        <Table
-          rowKey="id"
-          loading={loading}
-          dataSource={data ?? []}
-          columns={columns}
-          pagination={{ pageSize: 10 }}
-        />
+        <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+          <Table
+            rowKey="id"
+            loading={loading}
+            dataSource={data ?? []}
+            columns={columns}
+            scroll={{ x: "max-content" }}
+            pagination={{ pageSize: 10 }}
+            locale={{
+              emptyText: (
+                <div className="flex flex-col items-center justify-center gap-3 py-10 text-center">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-brand-blue-subtle text-2xl text-primary-container">
+                    <SyncOutlined />
+                  </div>
+                  <div>
+                    <p className="font-medium text-text-primary">Belum ada payroll run</p>
+                    <p className="text-sm text-text-secondary">Klik &quot;Proses Payroll&quot; untuk memulai</p>
+                  </div>
+                </div>
+              ),
+            }}
+          />
+        </div>
       </Card>
 
       <Modal
@@ -163,6 +186,8 @@ export default function PayrollPage() {
         cancelText="Batal"
         confirmLoading={submitting}
         destroyOnHidden
+        width="92vw"
+        style={{ maxWidth: 480 }}
       >
         <Form form={form} layout="vertical" onFinish={handleSubmit}>
           <Form.Item

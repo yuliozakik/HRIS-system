@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Alert, Button, Card, Popconfirm, Result, Segmented, Table, message } from "antd";
-import { CheckOutlined, CloseOutlined } from "@ant-design/icons";
+import { Alert, Button, Popconfirm, Result, Segmented, Table, message } from "antd";
+import type { ColumnsType } from "antd/es/table";
+import { CheckOutlined, CloseOutlined, FileTextOutlined } from "@ant-design/icons";
 import { api, ApiError } from "@/lib/api";
 import { useApiGet } from "@/lib/hooks";
 import { useAuth } from "@/lib/auth-context";
@@ -58,97 +59,118 @@ export default function LeaveApprovalsPage() {
     }
   }
 
+  const columns: ColumnsType<LeaveRequest> = [
+    {
+      title: "Karyawan",
+      key: "employee",
+      render: (_, record: LeaveRequest) => record.employee?.fullName ?? "-",
+    },
+    {
+      title: "Jenis Cuti",
+      dataIndex: "leaveType",
+      render: (type: LeaveType) => LEAVE_TYPE_LABELS[type],
+    },
+    { title: "Tanggal Mulai", dataIndex: "startDate" },
+    { title: "Tanggal Selesai", dataIndex: "endDate" },
+    {
+      title: "Alasan",
+      dataIndex: "reason",
+      responsive: ["sm"],
+      render: (reason: string | null) => reason || <span className="text-text-muted">-</span>,
+    },
+    {
+      title: "Status",
+      dataIndex: "status",
+      render: (status: LeaveStatus) => LEAVE_STATUS_LABELS[status],
+    },
+    {
+      title: "Aksi",
+      key: "actions",
+      render: (_, record: LeaveRequest) =>
+        record.status === "PENDING" ? (
+          <div className="flex flex-wrap gap-2">
+            <Popconfirm
+              title="Setujui pengajuan cuti ini?"
+              onConfirm={() => handleDecision(record.id, "APPROVED")}
+              okText="Ya"
+              cancelText="Tidak"
+            >
+              <Button
+                size="small"
+                type="primary"
+                icon={<CheckOutlined />}
+                style={{ backgroundColor: "#16a34a", borderColor: "#16a34a" }}
+                loading={decidingId === record.id}
+              >
+                Setujui
+              </Button>
+            </Popconfirm>
+            <Popconfirm
+              title="Tolak pengajuan cuti ini?"
+              onConfirm={() => handleDecision(record.id, "REJECTED")}
+              okText="Ya"
+              cancelText="Tidak"
+            >
+              <Button
+                size="small"
+                danger
+                icon={<CloseOutlined />}
+                loading={decidingId === record.id}
+              >
+                Tolak
+              </Button>
+            </Popconfirm>
+          </div>
+        ) : null,
+    },
+  ];
+
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4">
       <div>
-        <h1 className="text-xl font-semibold">Approval Cuti</h1>
-        <p className="text-zinc-500">
+        <h1 className="font-heading text-xl text-text-primary sm:text-2xl">Approval Cuti</h1>
+        <p className="text-sm text-text-secondary">
           {scope === "team" ? "Pengajuan cuti tim Anda" : "Pengajuan cuti seluruh karyawan"}
         </p>
       </div>
 
-      <Card
-        title="Daftar Pengajuan"
-        extra={
-          <Segmented
-            value={statusFilter}
-            onChange={(v) => setStatusFilter(v as StatusFilter)}
-            options={STATUS_OPTIONS}
-          />
-        }
-      >
+      <div className="animate-fade-in-up rounded-2xl bg-white p-4 shadow-sm sm:p-5">
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className="font-heading text-base font-semibold text-text-primary">
+            Daftar Pengajuan
+          </h2>
+          <div className="-mx-1 overflow-x-auto px-1">
+            <Segmented
+              size="small"
+              value={statusFilter}
+              onChange={(v) => setStatusFilter(v as StatusFilter)}
+              options={STATUS_OPTIONS}
+            />
+          </div>
+        </div>
+
         {error && <Alert type="error" showIcon message={error} className="mb-4" />}
-        <Table
-          rowKey="id"
-          loading={loading}
-          dataSource={data ?? []}
-          pagination={{ pageSize: 10 }}
-          columns={[
-            {
-              title: "Karyawan",
-              key: "employee",
-              render: (_, record: LeaveRequest) => record.employee?.fullName ?? "-",
-            },
-            {
-              title: "Jenis Cuti",
-              dataIndex: "leaveType",
-              render: (type: LeaveType) => LEAVE_TYPE_LABELS[type],
-            },
-            { title: "Tanggal Mulai", dataIndex: "startDate" },
-            { title: "Tanggal Selesai", dataIndex: "endDate" },
-            {
-              title: "Alasan",
-              dataIndex: "reason",
-              render: (reason: string | null) => reason || <span className="text-zinc-400">-</span>,
-            },
-            {
-              title: "Status",
-              dataIndex: "status",
-              render: (status: LeaveStatus) => LEAVE_STATUS_LABELS[status],
-            },
-            {
-              title: "Aksi",
-              key: "actions",
-              render: (_, record: LeaveRequest) =>
-                record.status === "PENDING" ? (
-                  <div className="flex gap-2">
-                    <Popconfirm
-                      title="Setujui pengajuan cuti ini?"
-                      onConfirm={() => handleDecision(record.id, "APPROVED")}
-                      okText="Ya"
-                      cancelText="Tidak"
-                    >
-                      <Button
-                        size="small"
-                        type="primary"
-                        icon={<CheckOutlined />}
-                        style={{ backgroundColor: "#16a34a", borderColor: "#16a34a" }}
-                        loading={decidingId === record.id}
-                      >
-                        Setujui
-                      </Button>
-                    </Popconfirm>
-                    <Popconfirm
-                      title="Tolak pengajuan cuti ini?"
-                      onConfirm={() => handleDecision(record.id, "REJECTED")}
-                      okText="Ya"
-                      cancelText="Tidak"
-                    >
-                      <Button
-                        size="small"
-                        danger
-                        icon={<CloseOutlined />}
-                        loading={decidingId === record.id}
-                      >
-                        Tolak
-                      </Button>
-                    </Popconfirm>
+        <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+          <Table
+            rowKey="id"
+            loading={loading}
+            dataSource={data ?? []}
+            pagination={{ pageSize: 10 }}
+            scroll={{ x: "max-content" }}
+            columns={columns}
+            locale={{
+              emptyText: (
+                <div className="flex flex-col items-center gap-2 py-8">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-blue-subtle text-lg text-primary-container">
+                    <FileTextOutlined />
                   </div>
-                ) : null,
-            },
-          ]}
-        />
-      </Card>
+                  <span className="text-sm text-text-muted">Tidak ada pengajuan cuti</span>
+                </div>
+              ),
+            }}
+          />
+        </div>
+      </div>
     </div>
   );
 }

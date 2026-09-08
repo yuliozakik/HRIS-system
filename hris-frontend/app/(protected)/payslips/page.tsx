@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Alert, Button, Card, Table, message } from "antd";
-import { DownloadOutlined } from "@ant-design/icons";
+import { Alert, Button, Table, message } from "antd";
+import { DownloadOutlined, WalletOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import { apiDownload, ApiError, triggerBlobDownload } from "@/lib/api";
 import { useApiGet } from "@/lib/hooks";
@@ -57,12 +57,14 @@ export default function PayslipsPage() {
       title: "Gaji Bersih",
       dataIndex: "netPay",
       key: "netPay",
-      render: (value: number | string) => formatCurrency(value),
+      render: (value: number | string) => (
+        <span className="font-semibold text-text-primary">{formatCurrency(value)}</span>
+      ),
     },
     {
       title: "Aksi",
       key: "actions",
-      width: 160,
+      width: 140,
       render: (_, record) => (
         <Button
           size="small"
@@ -77,23 +79,36 @@ export default function PayslipsPage() {
   ];
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4">
       <div>
-        <h1 className="text-xl font-semibold">Slip Gaji Saya</h1>
-        <p className="text-zinc-500">Riwayat dan unduhan slip gaji Anda</p>
+        <h1 className="font-heading text-xl text-text-primary sm:text-2xl">Slip Gaji Saya</h1>
+        <p className="text-sm text-text-secondary">Riwayat dan unduhan slip gaji Anda</p>
       </div>
 
       {error && <Alert type="error" showIcon message={error} />}
 
-      <Card>
-        <Table
-          rowKey="id"
-          loading={loading}
-          dataSource={data ?? []}
-          columns={columns}
-          pagination={{ pageSize: 10 }}
-        />
-      </Card>
+      <div className="animate-fade-in-up rounded-2xl bg-white p-4 shadow-sm sm:p-5">
+        <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+          <Table
+            rowKey="id"
+            loading={loading}
+            dataSource={data ?? []}
+            columns={columns}
+            pagination={{ pageSize: 10 }}
+            scroll={{ x: "max-content" }}
+            locale={{
+              emptyText: (
+                <div className="flex flex-col items-center gap-2 py-8">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent-subtle text-lg text-accent">
+                    <WalletOutlined />
+                  </div>
+                  <span className="text-sm text-text-muted">Belum ada slip gaji</span>
+                </div>
+              ),
+            }}
+          />
+        </div>
+      </div>
     </div>
   );
 }

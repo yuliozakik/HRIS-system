@@ -5,7 +5,8 @@ const PUBLIC_PATHS = ["/login", "/forgot-password", "/reset-password"];
 export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const hasSession = req.cookies.has("hris_session");
-  const isPublicPath = PUBLIC_PATHS.some((p) => pathname.startsWith(p));
+  const isLandingPage = pathname === "/";
+  const isPublicPath = isLandingPage || PUBLIC_PATHS.some((p) => pathname.startsWith(p));
 
   if (!hasSession && !isPublicPath) {
     const loginUrl = new URL("/login", req.url);
@@ -13,7 +14,7 @@ export function proxy(req: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  if (hasSession && pathname === "/login") {
+  if (hasSession && (pathname === "/login" || isLandingPage)) {
     return NextResponse.redirect(new URL("/dashboard", req.url));
   }
 

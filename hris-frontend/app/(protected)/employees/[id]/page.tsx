@@ -149,13 +149,17 @@ export default function EmployeeDetailPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-xl font-semibold">{employee.fullName}</h1>
-          <p className="text-zinc-500">NIK {employee.nik}</p>
+          <h1 className="font-heading text-xl text-text-primary sm:text-2xl">{employee.fullName}</h1>
+          <p className="text-sm text-text-secondary">NIK {employee.nik}</p>
         </div>
-        <div className="flex gap-2">
-          {canEdit && <Button onClick={() => setEditOpen(true)}>Edit</Button>}
+        <div className="flex flex-col gap-2 sm:flex-row">
+          {canEdit && (
+            <Button className="w-full sm:w-auto" onClick={() => setEditOpen(true)}>
+              Edit
+            </Button>
+          )}
           {isPrivileged && employee.status !== "RESIGNED" && (
             <Popconfirm
               title="Arsipkan karyawan ini?"
@@ -164,7 +168,7 @@ export default function EmployeeDetailPage() {
               okText="Ya, arsipkan"
               cancelText="Batal"
             >
-              <Button danger loading={archiving}>
+              <Button danger loading={archiving} className="w-full sm:w-auto">
                 Arsipkan
               </Button>
             </Popconfirm>
@@ -172,8 +176,12 @@ export default function EmployeeDetailPage() {
         </div>
       </div>
 
-      <Card title="Informasi Karyawan">
-        <Descriptions column={2} bordered size="small">
+      <Card
+        title="Informasi Karyawan"
+        className="animate-fade-in-up rounded-xl shadow-sm"
+        bordered={false}
+      >
+        <Descriptions column={{ xs: 1, sm: 2 }} bordered size="small">
           <Descriptions.Item label="Status">
             <Tag color={statusColor(employee.status)}>{statusLabel(employee.status)}</Tag>
           </Descriptions.Item>
@@ -204,7 +212,11 @@ export default function EmployeeDetailPage() {
       </Card>
 
       {employee.mutations && employee.mutations.length > 0 && (
-        <Card title="Riwayat Mutasi">
+        <Card
+          title="Riwayat Mutasi"
+          className="animate-fade-in-up rounded-xl shadow-sm [animation-delay:80ms]"
+          bordered={false}
+        >
           <Timeline
             items={employee.mutations.map((m) => ({
               children: (
@@ -220,22 +232,29 @@ export default function EmployeeDetailPage() {
         </Card>
       )}
 
-      <Card title="Dokumen">
-        <Table
-          rowKey="id"
-          dataSource={documents ?? []}
-          pagination={false}
-          locale={{ emptyText: <Empty description="Belum ada dokumen" /> }}
-          columns={[
-            { title: "Jenis Dokumen", dataIndex: "docType" },
-            { title: "Nama File", dataIndex: "fileName" },
-            {
-              title: "Tanggal Unggah",
-              dataIndex: "uploadedAt",
-              render: (value: string) => (value ? dayjs(value).format("DD-MM-YYYY HH:mm") : "-"),
-            },
-          ]}
-        />
+      <Card
+        title="Dokumen"
+        className="animate-fade-in-up rounded-xl shadow-sm [animation-delay:160ms]"
+        bordered={false}
+      >
+        <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+          <Table
+            rowKey="id"
+            dataSource={documents ?? []}
+            pagination={false}
+            scroll={{ x: "max-content" }}
+            locale={{ emptyText: <Empty description="Belum ada dokumen" /> }}
+            columns={[
+              { title: "Jenis Dokumen", dataIndex: "docType" },
+              { title: "Nama File", dataIndex: "fileName" },
+              {
+                title: "Tanggal Unggah",
+                dataIndex: "uploadedAt",
+                render: (value: string) => (value ? dayjs(value).format("DD-MM-YYYY HH:mm") : "-"),
+              },
+            ]}
+          />
+        </div>
         {canUploadDocs && (
           <div className="mt-4">
             <DocumentUploadForm employeeId={employeeId} onUploaded={reloadDocuments} />
@@ -297,10 +316,10 @@ function DocumentUploadForm({
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
       <AutoComplete
         placeholder="Jenis dokumen (mis. KTP)"
-        className="w-48"
+        className="w-full sm:w-48"
         value={docType}
         onChange={setDocType}
         options={DOC_TYPE_PRESETS.map((t) => ({ value: t }))}
@@ -309,7 +328,7 @@ function DocumentUploadForm({
         }
       />
       <Upload customRequest={customRequest} showUploadList={false} disabled={uploading}>
-        <Button icon={<UploadOutlined />} loading={uploading}>
+        <Button icon={<UploadOutlined />} loading={uploading} className="w-full sm:w-auto">
           Unggah Dokumen
         </Button>
       </Upload>
@@ -393,6 +412,8 @@ function EditEmployeeModal({
       onCancel={onClose}
       footer={null}
       destroyOnHidden
+      width="92vw"
+      style={{ maxWidth: 560 }}
       afterOpenChange={(isOpen) => {
         if (isOpen) form.setFieldsValue(initialValues);
       }}
@@ -443,12 +464,14 @@ function EditEmployeeModal({
         )}
 
         <Form.Item className="!mb-0 !mt-4">
-          <Button type="primary" htmlType="submit" loading={submitting}>
-            Simpan
-          </Button>
-          <Button className="ml-2" onClick={onClose}>
-            Batal
-          </Button>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button type="primary" htmlType="submit" loading={submitting} className="w-full sm:w-auto">
+              Simpan
+            </Button>
+            <Button className="w-full sm:ml-2 sm:w-auto" onClick={onClose}>
+              Batal
+            </Button>
+          </div>
         </Form.Item>
       </Form>
     </Modal>

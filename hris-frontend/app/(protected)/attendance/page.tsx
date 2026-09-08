@@ -1,8 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Alert, Button, Card, Table, Tag, message } from "antd";
-import { CheckCircleOutlined, LoginOutlined, LogoutOutlined } from "@ant-design/icons";
+import { Alert, Button, Table, Tag, message } from "antd";
+import type { ColumnsType } from "antd/es/table";
+import {
+  CheckCircleOutlined,
+  ClockCircleOutlined,
+  LoginOutlined,
+  LogoutOutlined,
+} from "@ant-design/icons";
 import dayjs from "dayjs";
 import { useApiGet } from "@/lib/hooks";
 import { api, ApiError } from "@/lib/api";
@@ -89,84 +95,130 @@ export default function AttendancePage() {
     }
   };
 
+  const statusText = !todayRow
+    ? "Belum absen"
+    : hasCheckedIn && hasCheckedOut
+      ? "Absensi selesai"
+      : hasCheckedIn
+        ? "Sudah check in"
+        : "Belum absen";
+
+  const columns: ColumnsType<AttendanceRow> = [
+    {
+      title: "Tanggal",
+      dataIndex: "date",
+      render: (value: string) => dayjs(value).format("DD-MM-YYYY"),
+    },
+    {
+      title: "Check In",
+      dataIndex: "checkIn",
+      render: (value: string | null) => (value ? dayjs(value).format("HH:mm") : "-"),
+    },
+    {
+      title: "Check Out",
+      dataIndex: "checkOut",
+      render: (value: string | null) => (value ? dayjs(value).format("HH:mm") : "-"),
+    },
+    {
+      title: "Status",
+      dataIndex: "status",
+      render: (value: string) => <Tag color={statusColor(value)}>{statusLabel(value)}</Tag>,
+    },
+    {
+      title: "Telat (menit)",
+      dataIndex: "lateMinutes",
+      responsive: ["sm"],
+      render: (value: number | null) => value ?? 0,
+    },
+    {
+      title: "Lembur (menit)",
+      dataIndex: "overtimeMinutes",
+      responsive: ["sm"],
+      render: (value: number | null) => value ?? 0,
+    },
+  ];
+
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h1 className="text-xl font-semibold">Absensi Saya</h1>
-        <p className="text-zinc-500">Catat kehadiran harian Anda</p>
+        <h1 className="font-heading text-xl text-text-primary sm:text-2xl">Absensi Saya</h1>
+        <p className="text-sm text-text-secondary">Catat kehadiran harian Anda</p>
       </div>
 
       {error && <Alert type="error" showIcon message={error} />}
 
-      <Card>
-        <div className="flex items-center gap-4">
-          <Button
-            type="primary"
-            size="large"
-            icon={<LoginOutlined />}
-            loading={checkingIn}
-            disabled={hasCheckedIn}
-            onClick={onCheckIn}
-          >
-            Check In
-          </Button>
-          <Button
-            size="large"
-            icon={<LogoutOutlined />}
-            loading={checkingOut}
-            disabled={!hasCheckedIn || hasCheckedOut}
-            onClick={onCheckOut}
-          >
-            Check Out
-          </Button>
-          {hasCheckedIn && hasCheckedOut && (
-            <span className="text-green-600 flex items-center gap-1">
-              <CheckCircleOutlined /> Absensi hari ini selesai
-            </span>
-          )}
+      <div className="animate-fade-in-up rounded-2xl bg-white p-4 shadow-sm sm:p-5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-brand-blue-subtle text-lg text-primary-container">
+              <ClockCircleOutlined />
+            </div>
+            <div>
+              <p className="text-xs font-medium text-text-secondary">Status Hari Ini</p>
+              <p className="font-heading text-base font-semibold text-text-primary">{statusText}</p>
+            </div>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button
+              type="primary"
+              size="large"
+              icon={<LoginOutlined />}
+              loading={checkingIn}
+              disabled={hasCheckedIn}
+              onClick={onCheckIn}
+              block
+              className="sm:!w-auto"
+            >
+              Check In
+            </Button>
+            <Button
+              size="large"
+              icon={<LogoutOutlined />}
+              loading={checkingOut}
+              disabled={!hasCheckedIn || hasCheckedOut}
+              onClick={onCheckOut}
+              block
+              className="sm:!w-auto"
+            >
+              Check Out
+            </Button>
+          </div>
         </div>
-      </Card>
+        {hasCheckedIn && hasCheckedOut && (
+          <div className="mt-4 flex items-center gap-1.5 rounded-lg bg-status-success-subtle px-3 py-2 text-sm font-medium text-status-success">
+            <CheckCircleOutlined /> Absensi hari ini selesai
+          </div>
+        )}
+      </div>
 
-      <Card title="Riwayat Absensi">
-        <Table
-          rowKey="id"
-          loading={loading}
-          dataSource={data ?? []}
-          pagination={{ pageSize: 10 }}
-          columns={[
-            {
-              title: "Tanggal",
-              dataIndex: "date",
-              render: (value: string) => dayjs(value).format("DD-MM-YYYY"),
-            },
-            {
-              title: "Check In",
-              dataIndex: "checkIn",
-              render: (value: string | null) => (value ? dayjs(value).format("HH:mm") : "-"),
-            },
-            {
-              title: "Check Out",
-              dataIndex: "checkOut",
-              render: (value: string | null) => (value ? dayjs(value).format("HH:mm") : "-"),
-            },
-            {
-              title: "Status",
-              dataIndex: "status",
-              render: (value: string) => <Tag color={statusColor(value)}>{statusLabel(value)}</Tag>,
-            },
-            {
-              title: "Telat (menit)",
-              dataIndex: "lateMinutes",
-              render: (value: number | null) => value ?? 0,
-            },
-            {
-              title: "Lembur (menit)",
-              dataIndex: "overtimeMinutes",
-              render: (value: number | null) => value ?? 0,
-            },
-          ]}
-        />
-      </Card>
+      <div
+        className="animate-fade-in-up rounded-2xl bg-white p-4 shadow-sm sm:p-5"
+        style={{ animationDelay: "80ms" }}
+      >
+        <h2 className="mb-3 font-heading text-base font-semibold text-text-primary">
+          Riwayat Absensi
+        </h2>
+        <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+          <Table
+            rowKey="id"
+            loading={loading}
+            dataSource={data ?? []}
+            pagination={{ pageSize: 10 }}
+            scroll={{ x: "max-content" }}
+            columns={columns}
+            locale={{
+              emptyText: (
+                <div className="flex flex-col items-center gap-2 py-8">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-blue-subtle text-lg text-primary-container">
+                    <ClockCircleOutlined />
+                  </div>
+                  <span className="text-sm text-text-muted">Belum ada riwayat absensi</span>
+                </div>
+              ),
+            }}
+          />
+        </div>
+      </div>
     </div>
   );
 }

@@ -20,7 +20,7 @@ const jakarta = Plus_Jakarta_Sans({
 
 export const metadata: Metadata = {
   title: "HRIS",
-  description: "Sistem Informasi HRIS Modern",
+  description: "Sistem Informasi HRIS",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

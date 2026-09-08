@@ -127,14 +127,18 @@ export default function PayrollRunDetailPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-xl font-semibold">Detail Payroll Run</h1>
-        <p className="text-zinc-500">Periode {run.period}</p>
+        <h1 className="font-heading text-xl text-text-primary sm:text-2xl">Detail Payroll Run</h1>
+        <p className="text-sm text-text-secondary">Periode {run.period}</p>
       </div>
 
       {error && <Alert type="error" showIcon message={error} />}
 
-      <Card title="Informasi Payroll Run">
-        <Descriptions column={2} bordered size="small">
+      <Card
+        title="Informasi Payroll Run"
+        className="animate-fade-in-up rounded-xl shadow-sm"
+        bordered={false}
+      >
+        <Descriptions column={{ xs: 1, sm: 2 }} bordered size="small">
           <Descriptions.Item label="Periode">{run.period}</Descriptions.Item>
           <Descriptions.Item label="Status">
             <Tag
@@ -153,13 +157,20 @@ export default function PayrollRunDetailPage() {
         </Descriptions>
       </Card>
 
-      <Card title="Rincian Gaji Karyawan">
-        <Table
-          rowKey="id"
-          dataSource={details}
-          columns={columns}
-          pagination={{ pageSize: 10 }}
-        />
+      <Card
+        title="Rincian Gaji Karyawan"
+        className="animate-fade-in-up rounded-xl shadow-sm [animation-delay:80ms]"
+        bordered={false}
+      >
+        <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+          <Table
+            rowKey="id"
+            dataSource={details}
+            columns={columns}
+            scroll={{ x: "max-content" }}
+            pagination={{ pageSize: 10 }}
+          />
+        </div>
       </Card>
     </div>
   );

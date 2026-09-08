@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Alert, Button, Card, Input, Select, Table, Tag } from "antd";
 import type { TableColumnsType } from "antd";
-import { PlusOutlined } from "@ant-design/icons";
+import { PlusOutlined, TeamOutlined } from "@ant-design/icons";
 import { useAuth } from "@/lib/auth-context";
 import { useApiGet } from "@/lib/hooks";
 
@@ -75,7 +75,11 @@ export default function EmployeesPage() {
       title: "Nama",
       dataIndex: "fullName",
       key: "fullName",
-      render: (value: string, record) => <Link href={`/employees/${record.id}`}>{value}</Link>,
+      render: (value: string, record) => (
+        <Link href={`/employees/${record.id}`} className="font-medium text-primary-container hover:underline">
+          {value}
+        </Link>
+      ),
     },
     {
       title: "Departemen",
@@ -97,20 +101,24 @@ export default function EmployeesPage() {
       title: "Aksi",
       key: "action",
       width: 100,
-      render: (_, record) => <Link href={`/employees/${record.id}`}>Detail</Link>,
+      render: (_, record) => (
+        <Link href={`/employees/${record.id}`} className="text-primary-container hover:underline">
+          Detail
+        </Link>
+      ),
     },
   ];
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-xl font-semibold">Karyawan</h1>
-          <p className="text-zinc-500">Daftar seluruh karyawan</p>
+          <h1 className="font-heading text-xl text-text-primary sm:text-2xl">Karyawan</h1>
+          <p className="text-sm text-text-secondary">Daftar seluruh karyawan</p>
         </div>
         {canCreate && (
-          <Link href="/employees/new">
-            <Button type="primary" icon={<PlusOutlined />}>
+          <Link href="/employees/new" className="w-full sm:w-auto">
+            <Button type="primary" icon={<PlusOutlined />} className="w-full sm:w-auto">
               Tambah Karyawan
             </Button>
           </Link>
@@ -119,19 +127,19 @@ export default function EmployeesPage() {
 
       {error && <Alert type="error" showIcon message={error} />}
 
-      <Card>
-        <div className="flex flex-wrap gap-3 mb-4">
+      <Card className="animate-fade-in-up rounded-xl shadow-sm" bordered={false}>
+        <div className="mb-4 flex flex-wrap gap-3">
           <Input.Search
             placeholder="Cari nama atau NIK..."
             allowClear
             defaultValue={search}
             onSearch={setSearch}
-            className="w-64"
+            className="w-full sm:w-64"
           />
           <Select
             placeholder="Departemen"
             allowClear
-            className="w-48"
+            className="w-full sm:w-48"
             value={departmentId}
             onChange={setDepartmentId}
             options={departments?.map((d) => ({ value: d.id, label: d.name }))}
@@ -139,20 +147,36 @@ export default function EmployeesPage() {
           <Select
             placeholder="Status"
             allowClear
-            className="w-40"
+            className="w-full sm:w-40"
             value={status}
             onChange={setStatus}
             options={STATUS_OPTIONS}
           />
         </div>
 
-        <Table
-          rowKey="id"
-          loading={loading}
-          dataSource={data ?? []}
-          columns={columns}
-          pagination={{ pageSize: 10, showSizeChanger: true }}
-        />
+        <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+          <Table
+            rowKey="id"
+            loading={loading}
+            dataSource={data ?? []}
+            columns={columns}
+            scroll={{ x: "max-content" }}
+            pagination={{ pageSize: 10, showSizeChanger: true }}
+            locale={{
+              emptyText: (
+                <div className="flex flex-col items-center justify-center gap-3 py-10 text-center">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-brand-blue-subtle text-2xl text-primary-container">
+                    <TeamOutlined />
+                  </div>
+                  <div>
+                    <p className="font-medium text-text-primary">Belum ada data karyawan</p>
+                    <p className="text-sm text-text-secondary">Coba ubah kata kunci atau filter pencarian</p>
+                  </div>
+                </div>
+              ),
+            }}
+          />
+        </div>
       </Card>
     </div>
   );

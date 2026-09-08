@@ -104,20 +104,23 @@ export default function AdminUsersPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-xl font-semibold">Kelola Akses</h1>
-        <p className="text-zinc-500">Kelola role dan status akun pengguna</p>
+        <h1 className="font-heading text-xl text-text-primary sm:text-2xl">Kelola Akses</h1>
+        <p className="text-sm text-text-secondary">Kelola role dan status akun pengguna</p>
       </div>
 
       {error && <Alert type="error" showIcon message={error} />}
 
-      <Card>
-        <Table
-          rowKey="id"
-          loading={loading}
-          dataSource={data ?? []}
-          columns={columns}
-          pagination={{ pageSize: 10 }}
-        />
+      <Card className="animate-fade-in-up rounded-xl shadow-sm" bordered={false}>
+        <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+          <Table
+            rowKey="id"
+            loading={loading}
+            dataSource={data ?? []}
+            columns={columns}
+            scroll={{ x: "max-content" }}
+            pagination={{ pageSize: 10 }}
+          />
+        </div>
       </Card>
     </div>
   );

@@ -59,49 +59,50 @@ export default function ReportsPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-xl font-semibold">Laporan</h1>
-        <p className="text-zinc-500">Ekspor laporan absensi, cuti, dan payroll</p>
+        <h1 className="font-heading text-xl text-text-primary sm:text-2xl">Laporan</h1>
+        <p className="text-sm text-text-secondary">Ekspor laporan absensi, cuti, dan payroll</p>
       </div>
 
       {isExportAllowed ? (
-        <Card title="Ekspor Laporan">
+        <Card title="Ekspor Laporan" className="animate-fade-in-up rounded-xl shadow-sm" bordered={false}>
           <Form
             form={form}
-            layout="inline"
+            layout="vertical"
             onFinish={handleExport}
             initialValues={{ format: "excel" as ExportFormat }}
+            className="flex flex-col gap-x-4 sm:flex-row sm:flex-wrap sm:items-end"
           >
             <Form.Item
               name="type"
               label="Jenis Laporan"
               rules={[{ required: true, message: "Jenis laporan wajib dipilih" }]}
+              className="w-full sm:w-48"
             >
-              <Select
-                placeholder="Pilih jenis laporan"
-                className="w-48"
-                options={TYPE_OPTIONS}
-              />
+              <Select placeholder="Pilih jenis laporan" className="w-full" options={TYPE_OPTIONS} />
             </Form.Item>
             <Form.Item
               name="period"
               label="Periode"
               rules={[{ required: true, message: "Periode wajib dipilih" }]}
+              className="w-full sm:w-40"
             >
-              <DatePicker picker="month" format="MM-YYYY" />
+              <DatePicker picker="month" format="MM-YYYY" className="w-full" />
             </Form.Item>
             <Form.Item
               name="format"
               label="Format"
               rules={[{ required: true, message: "Format wajib dipilih" }]}
+              className="w-full sm:w-32"
             >
-              <Select className="w-32" options={FORMAT_OPTIONS} />
+              <Select className="w-full" options={FORMAT_OPTIONS} />
             </Form.Item>
-            <Form.Item>
+            <Form.Item className="w-full sm:w-auto">
               <Button
                 type="primary"
                 icon={<DownloadOutlined />}
                 htmlType="submit"
                 loading={downloading}
+                className="w-full sm:w-auto"
               >
                 Unduh Laporan
               </Button>

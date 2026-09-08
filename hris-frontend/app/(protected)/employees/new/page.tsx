@@ -86,18 +86,18 @@ export default function NewEmployeePage() {
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h1 className="text-xl font-semibold">Tambah Karyawan</h1>
-        <p className="text-zinc-500">Isi data karyawan baru</p>
+        <h1 className="font-heading text-xl text-text-primary sm:text-2xl">Tambah Karyawan</h1>
+        <p className="text-sm text-text-secondary">Isi data karyawan baru</p>
       </div>
 
-      <Card className="max-w-3xl">
+      <Card className="animate-fade-in-up max-w-3xl rounded-xl shadow-sm" bordered={false}>
         <Form
           form={form}
           layout="vertical"
           onFinish={onFinish}
           disabled={submitting}
         >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">
+          <div className="grid grid-cols-1 gap-x-4 md:grid-cols-2">
             <Form.Item
               label="NIK"
               name="nik"
@@ -177,12 +177,14 @@ export default function NewEmployeePage() {
           </div>
 
           <Form.Item className="!mb-0 !mt-4">
-            <Button type="primary" htmlType="submit" loading={submitting}>
-              Simpan
-            </Button>
-            <Button className="ml-2" onClick={() => router.push("/employees")}>
-              Batal
-            </Button>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Button type="primary" htmlType="submit" loading={submitting} className="w-full sm:w-auto">
+                Simpan
+              </Button>
+              <Button className="w-full sm:ml-2 sm:w-auto" onClick={() => router.push("/employees")}>
+                Batal
+              </Button>
+            </div>
           </Form.Item>
         </Form>
       </Card>

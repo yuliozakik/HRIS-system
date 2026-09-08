@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Alert, Button, Card, Input, InputNumber, Result, Space, Table, Typography, message } from "antd";
+import { Alert, Button, Card, Input, InputNumber, Result, Table, Typography, message } from "antd";
 import { PlusOutlined, SaveOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import { api, ApiError } from "@/lib/api";
@@ -159,43 +159,56 @@ export default function AdminPoliciesPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-xl font-semibold">Kebijakan</h1>
-        <p className="text-zinc-500">Kelola konfigurasi kebijakan perusahaan</p>
+        <h1 className="font-heading text-xl text-text-primary sm:text-2xl">Kebijakan</h1>
+        <p className="text-sm text-text-secondary">Kelola konfigurasi kebijakan perusahaan</p>
       </div>
 
       {error && <Alert type="error" showIcon message={error} />}
 
-      <Card title="Daftar Kebijakan">
-        <Table
-          rowKey="key"
-          loading={loading}
-          dataSource={rows}
-          columns={columns}
-          pagination={false}
-        />
+      <Card title="Daftar Kebijakan" className="animate-fade-in-up rounded-xl shadow-sm" bordered={false}>
+        <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+          <Table
+            rowKey="key"
+            loading={loading}
+            dataSource={rows}
+            columns={columns}
+            scroll={{ x: "max-content" }}
+            pagination={false}
+          />
+        </div>
       </Card>
 
-      <Card title="Tambah Kebijakan Baru">
+      <Card
+        title="Tambah Kebijakan Baru"
+        className="animate-fade-in-up rounded-xl shadow-sm [animation-delay:80ms]"
+        bordered={false}
+      >
         <Typography.Paragraph type="secondary">
           Tambahkan key kebijakan lain yang belum ada di daftar di atas.
         </Typography.Paragraph>
-        <Space wrap>
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
           <Input
             placeholder="Key (contoh: overtimeRatePerHour)"
-            className="w-64"
+            className="w-full sm:w-64"
             value={newKey}
             onChange={(e) => setNewKey(e.target.value)}
           />
           <Input
             placeholder="Nilai"
-            className="w-64"
+            className="w-full sm:w-64"
             value={newValue}
             onChange={(e) => setNewValue(e.target.value)}
           />
-          <Button type="primary" icon={<PlusOutlined />} loading={addingNew} onClick={handleAddNew}>
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            loading={addingNew}
+            onClick={handleAddNew}
+            className="w-full sm:w-auto"
+          >
             Tambah
           </Button>
-        </Space>
+        </div>
       </Card>
     </div>
   );

@@ -15,6 +15,7 @@ import {
 import dayjs from "dayjs";
 import { useAuth } from "@/lib/auth-context";
 import { navItemsForRole, NAV_ITEMS } from "@/lib/nav";
+import MobileTabBar from "./mobile-tab-bar";
 
 const { Header, Sider, Content } = Layout;
 
@@ -93,7 +94,7 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-container text-base text-white">
             🧭
           </span>
-          {!collapsed && "HRIS Modern"}
+          {!collapsed && "HRIS"}
         </div>
 
         <Menu
@@ -211,8 +212,10 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
             </Dropdown>
           </div>
         </Header>
-        <Content className="p-4 sm:p-6">{children}</Content>
+        <Content className="p-4 pb-24 sm:p-6 lg:pb-6">{children}</Content>
       </Layout>
+
+      <MobileTabBar user={user} onLogout={logout} />
     </Layout>
   );
 }

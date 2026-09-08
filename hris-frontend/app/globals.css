@@ -19,6 +19,9 @@
   --color-brand-blue-subtle: #eff6ff;
   --color-secondary: #006a61;
   --color-tertiary: #3e3fcc;
+  --color-accent: #ff7a00;
+  --color-accent-hover: #e56b00;
+  --color-accent-subtle: #fff3e8;
 
   /* Status */
   --color-status-success: #10b981;
