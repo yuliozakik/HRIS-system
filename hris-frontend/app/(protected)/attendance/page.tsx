@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Alert, Button, Table, Tag, message } from "antd";
+import { Alert, App, Button, Table, Tag } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import {
   CheckCircleOutlined,
@@ -54,6 +54,7 @@ function statusLabel(status: string) {
 }
 
 export default function AttendancePage() {
+  const { message } = App.useApp();
   const [checkingIn, setCheckingIn] = useState(false);
   const [checkingOut, setCheckingOut] = useState(false);
 

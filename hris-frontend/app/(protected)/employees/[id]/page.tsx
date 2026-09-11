@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useParams } from "next/navigation";
 import {
   Alert,
+  App,
   AutoComplete,
   Button,
   Card,
@@ -21,7 +22,6 @@ import {
   Tag,
   Timeline,
   Upload,
-  message,
 } from "antd";
 import type { UploadProps } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
@@ -105,6 +105,7 @@ function formatCurrency(value?: number | null) {
 }
 
 export default function EmployeeDetailPage() {
+  const { message } = App.useApp();
   const params = useParams<{ id: string }>();
   const { user } = useAuth();
   const employeeId = params.id;
@@ -287,6 +288,7 @@ function DocumentUploadForm({
   employeeId: string;
   onUploaded: () => void;
 }) {
+  const { message } = App.useApp();
   const [docType, setDocType] = useState<string | undefined>();
   const [uploading, setUploading] = useState(false);
 
@@ -362,6 +364,7 @@ function EditEmployeeModal({
   isPrivileged: boolean;
   onSaved: () => void;
 }) {
+  const { message } = App.useApp();
   const [form] = Form.useForm<EditFormValues>();
   const [submitting, setSubmitting] = useState(false);
 

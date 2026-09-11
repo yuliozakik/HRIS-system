@@ -142,10 +142,23 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
       </Sider>
 
       <Layout
-        className="!bg-surface-page transition-all duration-200"
+        className="relative isolate overflow-x-hidden !bg-transparent transition-all duration-200"
         style={{ marginLeft: isMobile ? 0 : collapsed ? 80 : 228 }}
       >
-        <Header className="!h-16 !bg-white/90 backdrop-blur-xl flex items-center justify-between gap-4 border-b border-border-subtle px-4 shadow-sm sm:px-6">
+        <div
+          aria-hidden
+          className="pointer-events-none fixed inset-0 -z-10 bg-gradient-to-br from-brand-blue-subtle via-surface-page to-accent-subtle"
+        />
+        <div
+          aria-hidden
+          className="animate-float-slow pointer-events-none fixed top-[-6rem] right-[-6rem] -z-10 h-96 w-96 rounded-full bg-primary-container/10 blur-3xl"
+        />
+        <div
+          aria-hidden
+          className="animate-float-slower pointer-events-none fixed bottom-[-8rem] left-[10%] -z-10 h-96 w-96 rounded-full bg-accent/10 blur-3xl"
+        />
+
+        <Header className="!h-16 !bg-white/80 backdrop-blur-xl flex items-center justify-between gap-4 border-b border-border-subtle px-4 shadow-sm sm:px-6">
           <div className="flex min-w-0 flex-1 items-center gap-4">
             <button
               type="button"

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Alert, Button, Table, message } from "antd";
+import { Alert, App, Button, Table } from "antd";
 import { DownloadOutlined, WalletOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import { apiDownload, ApiError, triggerBlobDownload } from "@/lib/api";
@@ -26,6 +26,7 @@ function formatCurrency(value: number | string | null | undefined) {
 }
 
 export default function PayslipsPage() {
+  const { message } = App.useApp();
   const { user } = useAuth();
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 

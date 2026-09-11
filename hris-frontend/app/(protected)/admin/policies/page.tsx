@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Alert, Button, Card, Input, InputNumber, Result, Table, Typography, message } from "antd";
+import { Alert, App, Button, Card, Input, InputNumber, Result, Table, Typography } from "antd";
 import { PlusOutlined, SaveOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import { api, ApiError } from "@/lib/api";
@@ -30,6 +30,7 @@ interface PolicyRow {
 }
 
 export default function AdminPoliciesPage() {
+  const { message } = App.useApp();
   const { user } = useAuth();
   const isAllowed = user?.role === "HR_ADMIN" || user?.role === "SUPERADMIN";
 

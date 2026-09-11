@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Alert, Button, Popconfirm, Result, Segmented, Table, message } from "antd";
+import { Alert, App, Button, Popconfirm, Result, Segmented, Table } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { CheckOutlined, CloseOutlined, FileTextOutlined } from "@ant-design/icons";
 import { api, ApiError } from "@/lib/api";
@@ -26,6 +26,7 @@ const STATUS_OPTIONS: { label: string; value: StatusFilter }[] = [
 ];
 
 export default function LeaveApprovalsPage() {
+  const { message } = App.useApp();
   const { user } = useAuth();
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("PENDING");
   const [decidingId, setDecidingId] = useState<string | null>(null);

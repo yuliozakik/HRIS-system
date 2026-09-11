@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import {
   Alert,
+  App,
   Button,
   Card,
   DatePicker,
@@ -12,7 +13,6 @@ import {
   Result,
   Table,
   Tag,
-  message,
 } from "antd";
 import { PlusOutlined, ReloadOutlined, SyncOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
@@ -64,6 +64,7 @@ function statusLabel(status: PayrollStatus) {
 }
 
 export default function PayrollPage() {
+  const { message } = App.useApp();
   const { user } = useAuth();
   const [form] = Form.useForm<CreateRunFormValues>();
   const [modalOpen, setModalOpen] = useState(false);

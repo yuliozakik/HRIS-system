@@ -3,6 +3,7 @@
 import { useState } from "react";
 import {
   Alert,
+  App,
   Button,
   DatePicker,
   Form,
@@ -13,7 +14,6 @@ import {
   Skeleton,
   Table,
   Tag,
-  message,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { CalendarOutlined, PlusOutlined } from "@ant-design/icons";
@@ -45,6 +45,7 @@ const BALANCE_TINTS: Record<LeaveType, string> = {
 };
 
 export default function LeavePage() {
+  const { message } = App.useApp();
   const { user } = useAuth();
   const [form] = Form.useForm<LeaveRequestFormValues>();
   const [modalOpen, setModalOpen] = useState(false);

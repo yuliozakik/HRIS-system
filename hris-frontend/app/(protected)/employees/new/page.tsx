@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
+  App,
   Button,
   Card,
   DatePicker,
@@ -11,7 +12,6 @@ import {
   InputNumber,
   Result,
   Select,
-  message,
 } from "antd";
 import dayjs from "dayjs";
 import { useAuth } from "@/lib/auth-context";
@@ -48,6 +48,7 @@ interface CreateEmployeeForm {
 }
 
 export default function NewEmployeePage() {
+  const { message } = App.useApp();
   const { user } = useAuth();
   const router = useRouter();
   const [form] = Form.useForm<CreateEmployeeForm>();

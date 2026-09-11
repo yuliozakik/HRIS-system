@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Alert, Button, Card, Form, Result, Select, DatePicker, message } from "antd";
+import { Alert, App, Button, Card, Form, Result, Select, DatePicker } from "antd";
 import { DownloadOutlined } from "@ant-design/icons";
 import type { Dayjs } from "dayjs";
 import { apiDownload, ApiError, triggerBlobDownload } from "@/lib/api";
@@ -28,6 +28,7 @@ const FORMAT_OPTIONS: { value: ExportFormat; label: string }[] = [
 ];
 
 export default function ReportsPage() {
+  const { message } = App.useApp();
   const { user } = useAuth();
   const [form] = Form.useForm<ExportFormValues>();
   const [downloading, setDownloading] = useState(false);

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import { AntdRegistry } from "@ant-design/nextjs-registry";
-import { ConfigProvider } from "antd";
+import { App, ConfigProvider } from "antd";
 import idID from "antd/locale/id_ID";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
@@ -51,7 +51,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               },
             }}
           >
-            <AuthProvider>{children}</AuthProvider>
+            <App>
+              <AuthProvider>{children}</AuthProvider>
+            </App>
           </ConfigProvider>
         </AntdRegistry>
       </body>

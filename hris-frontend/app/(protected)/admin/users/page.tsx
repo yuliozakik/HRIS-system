@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Alert, Card, Result, Select, Switch, Table, message } from "antd";
+import { Alert, App, Card, Result, Select, Switch, Table } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { api, ApiError } from "@/lib/api";
 import { useApiGet } from "@/lib/hooks";
@@ -22,6 +22,7 @@ interface AdminUser {
 }
 
 export default function AdminUsersPage() {
+  const { message } = App.useApp();
   const { user } = useAuth();
   const isAllowed = user?.role === "SUPERADMIN";
 
