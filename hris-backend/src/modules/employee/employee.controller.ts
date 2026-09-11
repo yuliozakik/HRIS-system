@@ -28,6 +28,11 @@ export class EmployeeController {
     return this.employeeService.create(dto);
   }
 
+  @Get('directory')
+  directory(@Query('search') search?: string) {
+    return this.employeeService.directory(search);
+  }
+
   @Get(':id')
   findOne(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
     return this.employeeService.findOne(user, id);

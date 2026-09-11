@@ -52,13 +52,27 @@ enum PayrollRunStatus {
   FAILED
 }
 
+enum ReimbursementCategory {
+  TRANSPORT
+  MEDICAL
+  MEALS
+  OTHER
+}
+
+enum ReimbursementStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
 // ---------------------------------------------------------------------------
 // Auth / Access
 // ---------------------------------------------------------------------------
 
 model Role {
-  id       String       @id @default(uuid())
-  name     RoleName     @unique
+  id       String        @id @default(uuid())
+  name     RoleName      @unique
   accounts UserAccount[]
 
   @@map("role")
@@ -76,21 +90,22 @@ model UserAccount {
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @updatedAt @map("updated_at")
 
-  auditLogs           AuditLog[]
-  passwordResetTokens PasswordResetToken[]
-  approvedLeaves      LeaveRequest[]        @relation("LeaveApprover")
+  auditLogs              AuditLog[]
+  passwordResetTokens    PasswordResetToken[]
+  approvedLeaves         LeaveRequest[]         @relation("LeaveApprover")
+  approvedReimbursements ReimbursementRequest[] @relation("ReimbursementApprover")
 
   @@map("user_account")
 }
 
 model AuditLog {
-  id        String      @id @default(uuid())
-  userId    String?     @map("user_id")
+  id        String       @id @default(uuid())
+  userId    String?      @map("user_id")
   user      UserAccount? @relation(fields: [userId], references: [id])
   action    String
   metadata  Json?
-  ipAddress String?     @map("ip_address")
-  createdAt DateTime    @default(now()) @map("created_at")
+  ipAddress String?      @map("ip_address")
+  createdAt DateTime     @default(now()) @map("created_at")
 
   @@map("audit_log")
 }
@@ -134,33 +149,34 @@ model Position {
 }
 
 model Employee {
-  id             String         @id @default(uuid())
-  nik            String         @unique
-  fullName       String         @map("full_name")
-  address        String?
-  phone          String?
-  email          String?
-  departmentId   String?        @map("department_id")
-  department     Department?    @relation(fields: [departmentId], references: [id])
-  positionId     String?        @map("position_id")
-  position       Position?      @relation(fields: [positionId], references: [id])
-  managerId      String?        @map("manager_id")
-  manager        Employee?      @relation("EmployeeManager", fields: [managerId], references: [id])
-  subordinates   Employee[]     @relation("EmployeeManager")
-  hireDate       DateTime       @map("hire_date")
-  status         EmployeeStatus @default(ACTIVE)
-  baseSalary     Decimal        @default(0) @map("base_salary") @db.Decimal(14, 2)
-  allowance      Decimal        @default(0) @db.Decimal(14, 2)
-  createdAt      DateTime       @default(now()) @map("created_at")
-  updatedAt      DateTime       @updatedAt @map("updated_at")
+  id           String         @id @default(uuid())
+  nik          String         @unique
+  fullName     String         @map("full_name")
+  address      String?
+  phone        String?
+  email        String?
+  departmentId String?        @map("department_id")
+  department   Department?    @relation(fields: [departmentId], references: [id])
+  positionId   String?        @map("position_id")
+  position     Position?      @relation(fields: [positionId], references: [id])
+  managerId    String?        @map("manager_id")
+  manager      Employee?      @relation("EmployeeManager", fields: [managerId], references: [id])
+  subordinates Employee[]     @relation("EmployeeManager")
+  hireDate     DateTime       @map("hire_date")
+  status       EmployeeStatus @default(ACTIVE)
+  baseSalary   Decimal        @default(0) @map("base_salary") @db.Decimal(14, 2)
+  allowance    Decimal        @default(0) @db.Decimal(14, 2)
+  createdAt    DateTime       @default(now()) @map("created_at")
+  updatedAt    DateTime       @updatedAt @map("updated_at")
 
-  userAccount     UserAccount?
-  documents       EmployeeDocument[]
-  mutations       EmployeeMutation[]
-  attendances     Attendance[]
-  leaveRequests   LeaveRequest[]
-  leaveBalances   LeaveBalance[]
-  payrollDetails  PayrollDetail[]
+  userAccount           UserAccount?
+  documents             EmployeeDocument[]
+  mutations             EmployeeMutation[]
+  attendances           Attendance[]
+  leaveRequests         LeaveRequest[]
+  leaveBalances         LeaveBalance[]
+  payrollDetails        PayrollDetail[]
+  reimbursementRequests ReimbursementRequest[]
 
   @@map("employee")
 }
@@ -178,16 +194,16 @@ model EmployeeDocument {
 }
 
 model EmployeeMutation {
-  id            String    @id @default(uuid())
-  employeeId    String    @map("employee_id")
-  employee      Employee  @relation(fields: [employeeId], references: [id])
-  fromPositionId String?  @map("from_position_id")
-  toPositionId   String?  @map("to_position_id")
-  fromDepartmentId String? @map("from_department_id")
-  toDepartmentId   String? @map("to_department_id")
-  note          String?
-  effectiveDate DateTime  @map("effective_date")
-  createdAt     DateTime  @default(now()) @map("created_at")
+  id               String   @id @default(uuid())
+  employeeId       String   @map("employee_id")
+  employee         Employee @relation(fields: [employeeId], references: [id])
+  fromPositionId   String?  @map("from_position_id")
+  toPositionId     String?  @map("to_position_id")
+  fromDepartmentId String?  @map("from_department_id")
+  toDepartmentId   String?  @map("to_department_id")
+  note             String?
+  effectiveDate    DateTime @map("effective_date")
+  createdAt        DateTime @default(now()) @map("created_at")
 
   @@map("employee_mutation")
 }
@@ -207,18 +223,22 @@ model Shift {
 }
 
 model Attendance {
-  id             String            @id @default(uuid())
-  employeeId     String            @map("employee_id")
-  employee       Employee          @relation(fields: [employeeId], references: [id])
-  shiftId        String?           @map("shift_id")
-  shift          Shift?            @relation(fields: [shiftId], references: [id])
-  date           DateTime          @db.Date
-  checkIn        DateTime?         @map("check_in")
-  checkOut       DateTime?         @map("check_out")
-  status         AttendanceStatus  @default(ON_TIME)
-  lateMinutes    Int               @default(0) @map("late_minutes")
+  id              String           @id @default(uuid())
+  employeeId      String           @map("employee_id")
+  employee        Employee         @relation(fields: [employeeId], references: [id])
+  shiftId         String?          @map("shift_id")
+  shift           Shift?           @relation(fields: [shiftId], references: [id])
+  date            DateTime         @db.Date
+  checkIn         DateTime?        @map("check_in")
+  checkOut        DateTime?        @map("check_out")
+  checkInLat      Float?           @map("check_in_lat")
+  checkInLng      Float?           @map("check_in_lng")
+  checkOutLat     Float?           @map("check_out_lat")
+  checkOutLng     Float?           @map("check_out_lng")
+  status          AttendanceStatus @default(ON_TIME)
+  lateMinutes     Int              @default(0) @map("late_minutes")
   overtimeMinutes Int              @default(0) @map("overtime_minutes")
-  createdAt      DateTime          @default(now()) @map("created_at")
+  createdAt       DateTime         @default(now()) @map("created_at")
 
   @@unique([employeeId, date])
   @@map("attendance")
@@ -229,19 +249,19 @@ model Attendance {
 // ---------------------------------------------------------------------------
 
 model LeaveRequest {
-  id         String      @id @default(uuid())
-  employeeId String      @map("employee_id")
-  employee   Employee    @relation(fields: [employeeId], references: [id])
-  leaveType  LeaveType   @map("leave_type")
-  startDate  DateTime    @map("start_date") @db.Date
-  endDate    DateTime    @map("end_date") @db.Date
+  id         String       @id @default(uuid())
+  employeeId String       @map("employee_id")
+  employee   Employee     @relation(fields: [employeeId], references: [id])
+  leaveType  LeaveType    @map("leave_type")
+  startDate  DateTime     @map("start_date") @db.Date
+  endDate    DateTime     @map("end_date") @db.Date
   reason     String?
-  status     LeaveStatus @default(PENDING)
-  approverId String?     @map("approver_id")
+  status     LeaveStatus  @default(PENDING)
+  approverId String?      @map("approver_id")
   approver   UserAccount? @relation("LeaveApprover", fields: [approverId], references: [id])
-  decidedAt  DateTime?   @map("decided_at")
-  createdAt  DateTime    @default(now()) @map("created_at")
-  updatedAt  DateTime    @updatedAt @map("updated_at")
+  decidedAt  DateTime?    @map("decided_at")
+  createdAt  DateTime     @default(now()) @map("created_at")
+  updatedAt  DateTime     @updatedAt @map("updated_at")
 
   @@map("leave_request")
 }
@@ -256,6 +276,28 @@ model LeaveBalance {
 
   @@unique([employeeId, year, leaveType])
   @@map("leave_balance")
+}
+
+// ---------------------------------------------------------------------------
+// Reimbursement
+// ---------------------------------------------------------------------------
+
+model ReimbursementRequest {
+  id          String                @id @default(uuid())
+  employeeId  String                @map("employee_id")
+  employee    Employee              @relation(fields: [employeeId], references: [id])
+  category    ReimbursementCategory
+  amount      Decimal               @db.Decimal(14, 2)
+  description String?
+  receiptUrl  String?               @map("receipt_url")
+  status      ReimbursementStatus   @default(PENDING)
+  approverId  String?               @map("approver_id")
+  approver    UserAccount?          @relation("ReimbursementApprover", fields: [approverId], references: [id])
+  decidedAt   DateTime?             @map("decided_at")
+  createdAt   DateTime              @default(now()) @map("created_at")
+  updatedAt   DateTime              @updatedAt @map("updated_at")
+
+  @@map("reimbursement_request")
 }
 
 // ---------------------------------------------------------------------------

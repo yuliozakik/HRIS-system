@@ -6,6 +6,7 @@ import { RoleName } from '../../common/enums/role.enum';
 import { AuthenticatedUser } from '../../common/types/auth-user';
 import { AttendanceService } from './attendance.service';
 import { CheckInDto } from './dto/check-in.dto';
+import { CheckOutDto } from './dto/check-out.dto';
 import { QueryAttendanceDto } from './dto/query-attendance.dto';
 
 @ApiTags('attendance')
@@ -20,8 +21,8 @@ export class AttendanceController {
   }
 
   @Post('check-out')
-  checkOut(@CurrentUser() user: AuthenticatedUser) {
-    return this.attendanceService.checkOut(user);
+  checkOut(@CurrentUser() user: AuthenticatedUser, @Body() dto: CheckOutDto) {
+    return this.attendanceService.checkOut(user, dto);
   }
 
   @Get('me')

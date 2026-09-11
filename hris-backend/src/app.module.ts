@@ -9,6 +9,7 @@ import { NotificationModule } from './modules/notification/notification.module';
 import { EmployeeModule } from './modules/employee/employee.module';
 import { AttendanceModule } from './modules/attendance/attendance.module';
 import { LeaveModule } from './modules/leave/leave.module';
+import { ReimbursementModule } from './modules/reimbursement/reimbursement.module';
 import { PayrollModule } from './modules/payroll/payroll.module';
 import { ReportModule } from './modules/report/report.module';
 import { AdminModule } from './modules/admin/admin.module';
@@ -32,6 +33,7 @@ import { AdminModule } from './modules/admin/admin.module';
     EmployeeModule,
     AttendanceModule,
     LeaveModule,
+    ReimbursementModule,
     PayrollModule,
     ReportModule,
     AdminModule,

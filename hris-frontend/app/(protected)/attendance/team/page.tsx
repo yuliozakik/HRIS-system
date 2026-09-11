@@ -1,12 +1,15 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import { Alert, DatePicker, Result, Table, Tag } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import { TeamOutlined } from "@ant-design/icons";
+import { EnvironmentOutlined, TeamOutlined } from "@ant-design/icons";
 import dayjs, { Dayjs } from "dayjs";
 import { useAuth } from "@/lib/auth-context";
 import { useApiGet } from "@/lib/hooks";
+
+const LocationMap = dynamic(() => import("@/lib/components/LocationMap"), { ssr: false });
 
 const { RangePicker } = DatePicker;
 
@@ -15,6 +18,10 @@ interface TeamAttendanceRow {
   date: string;
   checkIn: string | null;
   checkOut: string | null;
+  checkInLat: number | null;
+  checkInLng: number | null;
+  checkOutLat: number | null;
+  checkOutLng: number | null;
   status: "ON_TIME" | "LATE" | "ABSENT" | "LEAVE";
   lateMinutes: number | null;
   overtimeMinutes: number | null;
@@ -113,13 +120,33 @@ export default function TeamAttendancePage() {
       responsive: ["sm"],
       render: (value: number | null) => value ?? 0,
     },
+    {
+      title: "Lokasi",
+      key: "location",
+      render: (_, record) =>
+        record.checkInLat != null ? (
+          <span className="inline-flex items-center gap-1 text-status-success">
+            <EnvironmentOutlined /> Tercatat
+          </span>
+        ) : (
+          <span className="text-text-muted">-</span>
+        ),
+    },
   ];
+
+  const isCompanyWide = user?.role === "HR_ADMIN" || user?.role === "SUPERADMIN";
 
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h1 className="font-heading text-xl text-text-primary sm:text-2xl">Rekap Absensi Tim</h1>
-        <p className="text-sm text-text-secondary">Ringkasan kehadiran anggota tim</p>
+        <h1 className="font-heading text-xl text-text-primary sm:text-2xl">
+          {isCompanyWide ? "Log Absensi Karyawan" : "Rekap Absensi Tim"}
+        </h1>
+        <p className="text-sm text-text-secondary">
+          {isCompanyWide
+            ? "Riwayat kehadiran seluruh karyawan, lengkap dengan lokasi absen"
+            : "Ringkasan kehadiran anggota tim"}
+        </p>
       </div>
 
       {error && <Alert type="error" showIcon message={error} />}
@@ -149,6 +176,25 @@ export default function TeamAttendancePage() {
             pagination={{ pageSize: 10 }}
             scroll={{ x: "max-content" }}
             columns={columns}
+            expandable={{
+              rowExpandable: (record) => record.checkInLat != null || record.checkOutLat != null,
+              expandedRowRender: (record) => (
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  {record.checkInLat != null && record.checkInLng != null && (
+                    <div className="flex-1">
+                      <p className="mb-1 text-xs font-medium text-text-secondary">Lokasi Check In</p>
+                      <LocationMap lat={record.checkInLat} lng={record.checkInLng} height={140} />
+                    </div>
+                  )}
+                  {record.checkOutLat != null && record.checkOutLng != null && (
+                    <div className="flex-1">
+                      <p className="mb-1 text-xs font-medium text-text-secondary">Lokasi Check Out</p>
+                      <LocationMap lat={record.checkOutLat} lng={record.checkOutLng} height={140} />
+                    </div>
+                  )}
+                </div>
+              ),
+            }}
             locale={{
               emptyText: (
                 <div className="flex flex-col items-center gap-2 py-8">

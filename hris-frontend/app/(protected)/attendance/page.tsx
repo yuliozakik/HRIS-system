@@ -1,23 +1,32 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import { Alert, App, Button, Table, Tag } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import {
   CheckCircleOutlined,
   ClockCircleOutlined,
+  EnvironmentOutlined,
   LoginOutlined,
   LogoutOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import { useApiGet } from "@/lib/hooks";
 import { api, ApiError } from "@/lib/api";
+import { getCurrentCoordinates } from "@/lib/geolocation";
+
+const LocationMap = dynamic(() => import("@/lib/components/LocationMap"), { ssr: false });
 
 interface AttendanceRow {
   id: string;
   date: string;
   checkIn: string | null;
   checkOut: string | null;
+  checkInLat: number | null;
+  checkInLng: number | null;
+  checkOutLat: number | null;
+  checkOutLng: number | null;
   status: "ON_TIME" | "LATE" | "ABSENT" | "LEAVE";
   lateMinutes: number | null;
   overtimeMinutes: number | null;
@@ -73,8 +82,11 @@ export default function AttendancePage() {
   const onCheckIn = async () => {
     setCheckingIn(true);
     try {
-      await api.post("/attendance/check-in");
-      message.success("Check in berhasil");
+      const coords = await getCurrentCoordinates();
+      await api.post("/attendance/check-in", coords ?? {});
+      message.success(
+        coords ? "Check in berhasil (lokasi tercatat)" : "Check in berhasil",
+      );
       reload();
     } catch (err) {
       message.error(err instanceof ApiError ? err.message : "Gagal melakukan check in");
@@ -86,8 +98,11 @@ export default function AttendancePage() {
   const onCheckOut = async () => {
     setCheckingOut(true);
     try {
-      await api.post("/attendance/check-out");
-      message.success("Check out berhasil");
+      const coords = await getCurrentCoordinates();
+      await api.post("/attendance/check-out", coords ?? {});
+      message.success(
+        coords ? "Check out berhasil (lokasi tercatat)" : "Check out berhasil",
+      );
       reload();
     } catch (err) {
       message.error(err instanceof ApiError ? err.message : "Gagal melakukan check out");
@@ -136,6 +151,18 @@ export default function AttendancePage() {
       dataIndex: "overtimeMinutes",
       responsive: ["sm"],
       render: (value: number | null) => value ?? 0,
+    },
+    {
+      title: "Lokasi",
+      key: "location",
+      render: (_, record) =>
+        record.checkInLat != null ? (
+          <span className="inline-flex items-center gap-1 text-status-success">
+            <EnvironmentOutlined /> Tercatat
+          </span>
+        ) : (
+          <span className="text-text-muted">-</span>
+        ),
     },
   ];
 
@@ -190,6 +217,14 @@ export default function AttendancePage() {
             <CheckCircleOutlined /> Absensi hari ini selesai
           </div>
         )}
+        {todayRow?.checkInLat != null && todayRow?.checkInLng != null && (
+          <div className="mt-4">
+            <p className="mb-2 flex items-center gap-1.5 text-xs font-medium text-text-secondary">
+              <EnvironmentOutlined /> Lokasi Check In Hari Ini
+            </p>
+            <LocationMap lat={todayRow.checkInLat} lng={todayRow.checkInLng} />
+          </div>
+        )}
       </div>
 
       <div
@@ -207,6 +242,25 @@ export default function AttendancePage() {
             pagination={{ pageSize: 10 }}
             scroll={{ x: "max-content" }}
             columns={columns}
+            expandable={{
+              rowExpandable: (record) => record.checkInLat != null || record.checkOutLat != null,
+              expandedRowRender: (record) => (
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  {record.checkInLat != null && record.checkInLng != null && (
+                    <div className="flex-1">
+                      <p className="mb-1 text-xs font-medium text-text-secondary">Lokasi Check In</p>
+                      <LocationMap lat={record.checkInLat} lng={record.checkInLng} height={140} />
+                    </div>
+                  )}
+                  {record.checkOutLat != null && record.checkOutLng != null && (
+                    <div className="flex-1">
+                      <p className="mb-1 text-xs font-medium text-text-secondary">Lokasi Check Out</p>
+                      <LocationMap lat={record.checkOutLat} lng={record.checkOutLng} height={140} />
+                    </div>
+                  )}
+                </div>
+              ),
+            }}
             locale={{
               emptyText: (
                 <div className="flex flex-col items-center gap-2 py-8">

@@ -5,6 +5,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { RoleName } from '../../common/enums/role.enum';
 import { AuthenticatedUser } from '../../common/types/auth-user';
 import { CheckInDto } from './dto/check-in.dto';
+import { CheckOutDto } from './dto/check-out.dto';
 import { QueryAttendanceDto } from './dto/query-attendance.dto';
 
 @Injectable()
@@ -46,17 +47,21 @@ export class AttendanceService {
         checkIn: now,
         status,
         lateMinutes,
+        checkInLat: dto.lat,
+        checkInLng: dto.lng,
       },
       update: {
         shiftId,
         checkIn: now,
         status,
         lateMinutes,
+        checkInLat: dto.lat,
+        checkInLng: dto.lng,
       },
     });
   }
 
-  async checkOut(user: AuthenticatedUser) {
+  async checkOut(user: AuthenticatedUser, dto: CheckOutDto) {
     const employeeId = this.requireEmployeeId(user);
     const today = dayjs().startOf('day').toDate();
     const now = new Date();
@@ -82,7 +87,7 @@ export class AttendanceService {
 
     return this.prisma.attendance.update({
       where: { id: existing.id },
-      data: { checkOut: now, overtimeMinutes },
+      data: { checkOut: now, overtimeMinutes, checkOutLat: dto.lat, checkOutLng: dto.lng },
     });
   }
 

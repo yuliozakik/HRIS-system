@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Alert, App, Button, Table } from "antd";
-import { DownloadOutlined, WalletOutlined } from "@ant-design/icons";
+import { Alert, App, Button, Modal, Table } from "antd";
+import { DownloadOutlined, EyeOutlined, WalletOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
+import dayjs from "dayjs";
 import { apiDownload, ApiError, triggerBlobDownload } from "@/lib/api";
 import { useApiGet } from "@/lib/hooks";
 import { useAuth } from "@/lib/auth-context";
@@ -25,10 +26,15 @@ function formatCurrency(value: number | string | null | undefined) {
   return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR" }).format(num);
 }
 
+function periodOf(row: Payslip) {
+  return row.payrollRun?.period ?? row.period ?? row.id;
+}
+
 export default function PayslipsPage() {
   const { message } = App.useApp();
   const { user } = useAuth();
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [previewRow, setPreviewRow] = useState<Payslip | null>(null);
 
   const { data, loading, error } = useApiGet<Payslip[]>(
     user?.employeeId ? `/payslips/${user.employeeId}` : null,
@@ -39,8 +45,7 @@ export default function PayslipsPage() {
     setDownloadingId(row.id);
     try {
       const blob = await apiDownload(`/payslips/${user.employeeId}/${row.id}/pdf`);
-      const period = row.payrollRun?.period ?? row.period ?? row.id;
-      triggerBlobDownload(blob, `slip-gaji-${period}.pdf`);
+      triggerBlobDownload(blob, `slip-gaji-${periodOf(row)}.pdf`);
     } catch (err) {
       message.error(err instanceof ApiError ? err.message : "Gagal mengunduh slip gaji");
     } finally {
@@ -52,7 +57,7 @@ export default function PayslipsPage() {
     {
       title: "Periode",
       key: "period",
-      render: (_, record) => record.payrollRun?.period ?? record.period ?? "-",
+      render: (_, record) => periodOf(record),
     },
     {
       title: "Gaji Bersih",
@@ -65,16 +70,21 @@ export default function PayslipsPage() {
     {
       title: "Aksi",
       key: "actions",
-      width: 140,
+      width: 220,
       render: (_, record) => (
-        <Button
-          size="small"
-          icon={<DownloadOutlined />}
-          loading={downloadingId === record.id}
-          onClick={() => handleDownload(record)}
-        >
-          Unduh PDF
-        </Button>
+        <div className="flex gap-2">
+          <Button size="small" icon={<EyeOutlined />} onClick={() => setPreviewRow(record)}>
+            Lihat
+          </Button>
+          <Button
+            size="small"
+            icon={<DownloadOutlined />}
+            loading={downloadingId === record.id}
+            onClick={() => handleDownload(record)}
+          >
+            Unduh PDF
+          </Button>
+        </div>
       ),
     },
   ];
@@ -110,6 +120,93 @@ export default function PayslipsPage() {
           />
         </div>
       </div>
+
+      <Modal
+        open={!!previewRow}
+        onCancel={() => setPreviewRow(null)}
+        title={null}
+        footer={
+          previewRow && [
+            <Button key="close" onClick={() => setPreviewRow(null)}>
+              Tutup
+            </Button>,
+            <Button
+              key="download"
+              type="primary"
+              icon={<DownloadOutlined />}
+              loading={downloadingId === previewRow.id}
+              onClick={() => handleDownload(previewRow)}
+            >
+              Unduh PDF
+            </Button>,
+          ]
+        }
+        width={480}
+        destroyOnHidden
+      >
+        {previewRow && <PayslipPaper row={previewRow} employeeName={user?.fullName ?? "-"} />}
+      </Modal>
+    </div>
+  );
+}
+
+function PayslipPaper({ row, employeeName }: { row: Payslip; employeeName: string }) {
+  return (
+    <div className="mt-2 rounded-lg border border-border-subtle bg-white p-6 shadow-sm">
+      <div className="flex items-center justify-between border-b border-dashed border-border-subtle pb-4">
+        <div className="flex items-center gap-2">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-container text-sm text-white">
+            🧭
+          </span>
+          <span className="font-heading text-base font-bold text-text-primary">HRIS</span>
+        </div>
+        <span className="text-xs font-medium text-text-muted">Slip Gaji Elektronik</span>
+      </div>
+
+      <div className="mt-4 flex items-center justify-between">
+        <div>
+          <p className="text-xs text-text-muted">Nama Karyawan</p>
+          <p className="font-heading text-base font-semibold text-text-primary">{employeeName}</p>
+        </div>
+        <div className="text-right">
+          <p className="text-xs text-text-muted">Periode</p>
+          <p className="font-heading text-base font-semibold text-text-primary">{periodOf(row)}</p>
+        </div>
+      </div>
+
+      <div className="mt-5 flex flex-col gap-2 text-sm">
+        <div className="flex items-center justify-between">
+          <span className="text-text-secondary">Gaji Pokok</span>
+          <span className="font-medium text-text-primary">{formatCurrency(row.baseSalary)}</span>
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-text-secondary">Tunjangan</span>
+          <span className="font-medium text-status-success">
+            + {formatCurrency(row.allowance)}
+          </span>
+        </div>
+        <div className="flex items-center justify-between border-t border-border-subtle pt-2">
+          <span className="text-text-secondary">Gaji Kotor</span>
+          <span className="font-medium text-text-primary">{formatCurrency(row.grossPay)}</span>
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-text-secondary">Potongan</span>
+          <span className="font-medium text-status-danger">
+            - {formatCurrency(row.deductions)}
+          </span>
+        </div>
+      </div>
+
+      <div className="mt-4 flex items-center justify-between rounded-lg bg-status-success-subtle px-4 py-3">
+        <span className="text-sm font-semibold text-status-success">Gaji Bersih</span>
+        <span className="font-heading text-lg font-bold text-status-success">
+          {formatCurrency(row.netPay)}
+        </span>
+      </div>
+
+      <p className="mt-4 text-center text-[11px] text-text-muted">
+        Dokumen ini dihasilkan otomatis oleh sistem pada {dayjs().format("DD MMMM YYYY")}
+      </p>
     </div>
   );
 }

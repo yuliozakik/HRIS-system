@@ -61,6 +61,37 @@ export class EmployeeService {
     });
   }
 
+  /**
+   * Read-only company directory, open to every authenticated role. Only
+   * exposes work-relevant fields (name, department, position, email) — no
+   * NIK, salary, address, or phone.
+   */
+  async directory(search?: string) {
+    const where: Prisma.EmployeeWhereInput = { status: EmployeeStatus.ACTIVE };
+    if (search) {
+      where.OR = [
+        { fullName: { contains: search, mode: 'insensitive' } },
+        { position: { title: { contains: search, mode: 'insensitive' } } },
+        { department: { name: { contains: search, mode: 'insensitive' } } },
+      ];
+    }
+
+    const employees = await this.prisma.employee.findMany({
+      where,
+      select: {
+        id: true,
+        fullName: true,
+        email: true,
+        department: { select: { name: true } },
+        position: { select: { title: true } },
+        manager: { select: { id: true, fullName: true } },
+      },
+      orderBy: { fullName: 'asc' },
+    });
+
+    return employees;
+  }
+
   async create(dto: CreateEmployeeDto) {
     const existing = await this.prisma.employee.findUnique({ where: { nik: dto.nik } });
     if (existing) {

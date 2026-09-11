@@ -10,6 +10,9 @@ import {
   BarChartOutlined,
   SafetyCertificateOutlined,
   SettingOutlined,
+  IdcardOutlined,
+  AccountBookOutlined,
+  FileDoneOutlined,
 } from "@ant-design/icons";
 import type { RoleName } from "./types";
 
@@ -59,6 +62,19 @@ export const NAV_ITEMS: NavItem[] = [
     roles: ["MANAGER", "HR_ADMIN", "SUPERADMIN"],
   },
   {
+    key: "reimbursement",
+    label: "Reimbursement Saya",
+    href: "/reimbursements",
+    icon: <AccountBookOutlined />,
+  },
+  {
+    key: "reimbursement-approvals",
+    label: "Approval Reimbursement",
+    href: "/reimbursements/approvals",
+    icon: <FileDoneOutlined />,
+    roles: ["MANAGER", "HR_ADMIN", "SUPERADMIN"],
+  },
+  {
     key: "payroll",
     label: "Payroll",
     href: "/payroll",
@@ -66,6 +82,7 @@ export const NAV_ITEMS: NavItem[] = [
     roles: ["HR_ADMIN", "SUPERADMIN"],
   },
   { key: "payslips", label: "Slip Gaji Saya", href: "/payslips", icon: <FileTextOutlined /> },
+  { key: "directory", label: "Direktori Karyawan", href: "/directory", icon: <IdcardOutlined /> },
   {
     key: "reports",
     label: "Laporan",
